@@ -165,7 +165,7 @@ export default class HomePage extends React.Component<any, State> {
 
     pushError = (err: string) => {
         this.setState(prev => {
-            prev.errorLogs.unshift(err);
+            prev.errorLogs.unshift(err.toString());
             if (prev.errorLogs.length > 100) {
                 prev.errorLogs.splice(prev.errorLogs.length - 1, 1);
             }
@@ -175,7 +175,7 @@ export default class HomePage extends React.Component<any, State> {
 
     pushLog = (log: string) => {
         this.setState(prev => {
-            prev.logs.unshift(log);
+            prev.logs.unshift(log.toString());
             if (prev.logs.length > 100) {
                 prev.logs.splice(prev.logs.length - 1, 1);
             }
@@ -271,7 +271,7 @@ export default class HomePage extends React.Component<any, State> {
                                          onClick={() => {
                                              this.toggleContentPopup({
                                                  title: 'Viewing Error',
-                                                 content: <p style={{color: '#ff6767'}}>{e}</p>
+                                                 content: <p style={{color: '#ff6767'}}>{e.toString()}</p>
                                              })
                                          }}>
                             <Icon slot="media" f7="alert"/>

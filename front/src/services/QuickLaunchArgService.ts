@@ -66,7 +66,7 @@ export class QuickLaunchArgService {
     
     private getQuickLaunchConfig(): string[] {
         let args: string[] = process.argv;
-        args = args.filter(s => !s.includes('electron') && s !== '.' && !s.startsWith("-"));
+        args = args.filter(s => s && !s.includes('electron') && s !== '.' && !s.startsWith("-") && !s.endsWith('.exe'));
         return args;
     }
     
