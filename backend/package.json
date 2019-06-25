@@ -1,0 +1,23 @@
+{
+  "name": "rspeer-launcher",
+  "version": "1.0.0",
+  "description": "RSPeer Launcher",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build-sqlite3": "electron-rebuild -w sqlite3 -p"
+  },
+  "devDependencies": {
+    "electron-rebuild": "^1.8.5",
+    "electron": "5.0.5"
+  },
+  "dependencies": {
+    "fs-extra": "^8.0.1",
+    "axios": "^0.19.0",
+    "execa": "^1.0.0",
+    "socket.io-client": "^2.2.0",
+    "sqlite3": "^4.0.9",
+    "typescript": "^3.5.2",
+    "yauzl": "^2.10.0"
+  }
+}
