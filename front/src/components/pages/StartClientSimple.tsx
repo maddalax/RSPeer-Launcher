@@ -82,7 +82,16 @@ export default ({open, onFinish, onError, onLog}: Props) => {
                 type : 'start:client',
                 sleep : 10
             };
-            await remoteLauncher.send(selectedLauncher || Object.keys(launchers)[0], simple);
+            try {
+                await remoteLauncher.send(selectedLauncher || Object.keys(launchers)[0], simple);
+            } catch(ex) {
+                onError(ex);
+            }
+            setTimeout(() => {
+                onLog(`Successfully send open command to ${launcher.host} (${launcher.ip}). Client should open shortly on that machine.`);
+                setLoading(false);
+                onFinish(0);
+            }, 1000)
         }
     };
 
@@ -175,7 +184,7 @@ export default ({open, onFinish, onError, onLog}: Props) => {
                         label="Computer"
                         type="select"
                         value={selectedLauncher || Object.keys(launchers)[0]}
-                        placeholder="Please choose..."
+                        placeholder="Loading..."
                         onChange={(e) => {
                            setSelectedLauncher(e.target.value);
                         }}

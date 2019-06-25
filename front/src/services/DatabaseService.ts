@@ -53,6 +53,12 @@ export class DatabaseService {
     }
 
     public async writeLog(category: string, type: string, message: string) {
+        if(message == null) {
+            return;
+        }
+        if(typeof message === 'object') {
+            message = JSON.stringify(message);
+        }
         const query = 'INSERT INTO logs(category, type, message) values (?, ?, ?)';
         return await this.run(query, [category, type, message]);
     }
@@ -112,6 +118,7 @@ export class DatabaseService {
         try {
             return await promise;
         } catch (e) {
+            console.error(e);
             EventBus.getInstance().dispatch('on_error', 'Database error: ' + e.toString());
         }
     }

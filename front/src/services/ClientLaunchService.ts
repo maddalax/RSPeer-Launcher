@@ -66,7 +66,6 @@ export class ClientLaunchService {
     private async doLaunch(config: ClientLaunchConfig, state : ClientLaunchState) {
         let didError : boolean = false;
         config.jvmArgs = config.jvmArgs || ClientLaunchService.DEFAULT_JVM_ARGS;
-        console.log(config.jvmArgs);
         try {
             const jar = await this.clientService.getLatestJarPath();
             setTimeout(() => {
@@ -80,7 +79,7 @@ export class ClientLaunchService {
         } catch (e) {
             didError = true;
             const error = e.message || JSON.stringify(e);
-            config.onError(error);
+            config.onError(error.toString());
             return;
         }
     }

@@ -198,7 +198,7 @@ export default class HomePage extends React.Component<any, State> {
                 <NavLeft>
                     <Link iconIos="f7:menu" iconMd="material:menu" panelOpen="left"/>
                 </NavLeft>
-                <NavTitle>RSPeer Launcher</NavTitle>
+                <NavTitle>RSPeer Launcher v1.03</NavTitle>
             </Navbar>
             <EditJavaPath path={this.state.javaPath} open={this.state.clearingJavaPath}
                           onFinish={this.onFinishPathEdit}/>

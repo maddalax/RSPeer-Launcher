@@ -29,7 +29,6 @@ export class RemoteLauncherService {
     }
     
     public async send(launcher : string, payload : any) {
-        console.log(launcher);
         await this.api.post("botLauncher/send", {
             payload,
             socket : launcher
