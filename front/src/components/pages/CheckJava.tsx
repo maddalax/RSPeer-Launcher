@@ -27,46 +27,38 @@ export function CheckJava({onFinish, isQuickLaunch} : CheckDependenciesProps) {
     const [javaFileName, setJavaFileName] = useState('');
     const fileService = getService<FileService>('FileService');
     const db = getService<DatabaseService>('Database');
-    
+
     async function getJavaFileZip() {
         const botData = await fileService.getBotDataFolder();
         const javaFileName = `${await fileService.getJavaFolderName()}.zip`;
         return path.join(botData, javaFileName);
     }
-    
+
     async function downloadJava() {
         if(await fileService.exists(await getJavaFileZip())) {
+            setStartingDownload(false);
             return;
         }
+        setStartingDownload(false);
         setStartedDownload(true);
         const botData = await fileService.getBotDataFolder();
         const javaFileName = await fileService.getJavaFolderName();
         setJavaFileName(javaFileName);
-        try {
-            const dest = path.join(botData, 'jre-8-mac64.zip');
-            await Http.download('raw.githubusercontent.com', `/MaddoxDevelopment/RSPeer.BundledJava/master/${javaFileName}.zip`, dest, (data: any) => {
-                setDownloadSize(data);
-            }).catch((ex) => {
-                console.log(ex);
-            })
-        } catch (e) {
-            console.log(e);
-        }
+        const dest = path.join(botData, `${javaFileName}.zip`);
+        await Http.download('raw.githubusercontent.com', `/MaddoxDevelopment/RSPeer.BundledJava/master/${javaFileName}.zip`, dest, (data: any) => {
+            setDownloadSize(data);
+        });
     };
-    
+
     async function extractJava() {
+        setStartingDownload(false);
         const botData = await fileService.getBotDataFolder();
         const javaFileName = `${await fileService.getJavaFolderName()}`;
         const extractedPath = path.join(botData, javaFileName);
         const zip = `${extractedPath}.zip`;
-        try {
-            await fileService.unzip(zip, botData, (data) => {
-                setExtracting(data);
-            });
-        } catch(ex) {
-            setError(ex.toString());
-            return;
-        }
+        await fileService.unzip(zip, botData, (data) => {
+            setExtracting(data);
+        });
         setExtracting('');
         await db.setConfig('javaPath', await fileService.getJavaPath());
         await fs.remove(zip);
@@ -75,17 +67,15 @@ export function CheckJava({onFinish, isQuickLaunch} : CheckDependenciesProps) {
             checkDependencies();
         }, 500)
     }
-    
+
     async function checkDependencies() {
-        
-        console.log('chdcking dept')
         
         if (startingDownload) {
             return;
         }
 
         const definedJavaPath = await db.getConfig('javaPath');
-        
+
         let hasJava = false;
 
         if (definedJavaPath) {
@@ -98,7 +88,6 @@ export function CheckJava({onFinish, isQuickLaunch} : CheckDependenciesProps) {
             }
 
             if (!hasJava) {
-                console.log('Selected java path does not exist anymore. Clearing.');
                 await db.setConfig('javaPath', null);
             }
 
@@ -107,12 +96,9 @@ export function CheckJava({onFinish, isQuickLaunch} : CheckDependenciesProps) {
         if (!hasJava) {
             const javaPath = await fileService.getJavaPath();
             if (await fileService.exists(javaPath)) {
-                console.log('here lol', javaPath);
                 await db.setConfig('javaPath', javaPath);
                 hasJava = true;
-                const test = await db.getConfig('javaPath');
-                console.log('test', test);
-                setTimeout(onFinish, 3000);
+                setTimeout(onFinish, 1500);
                 return;
             }
         }
@@ -128,7 +114,7 @@ export function CheckJava({onFinish, isQuickLaunch} : CheckDependenciesProps) {
         }
 
     }
-    
+
     async function startDependenciesDownload() {
         if(startedDownload) {
             return;
@@ -138,11 +124,13 @@ export function CheckJava({onFinish, isQuickLaunch} : CheckDependenciesProps) {
             await downloadJava();
             await extractJava();
         } catch (e) {
-            console.log(e);
+            setStartingDownload(false);
+            setError(e.toString());
+            return;
         }
         reset();
     }
-    
+
     async function specifyCustomJava() {
         const getJavaPath = new Promise(res => {
             dialog.showOpenDialog({
@@ -169,7 +157,7 @@ export function CheckJava({onFinish, isQuickLaunch} : CheckDependenciesProps) {
             checkDependencies();
         }, 500);
     }
-    
+
     function reset() {
         setStartingDownload(false);
         setStartedDownload(false);
@@ -177,7 +165,7 @@ export function CheckJava({onFinish, isQuickLaunch} : CheckDependenciesProps) {
         setMissingJava(false);
         setDownloadSize({current : '', size : ''});
     }
-    
+
     function startDownload() {
         setStartingDownload(true);
         setStartedDownload(false);
@@ -185,13 +173,17 @@ export function CheckJava({onFinish, isQuickLaunch} : CheckDependenciesProps) {
         setMissingJava(false);
         setDownloadSize({current : '', size : ''});
     }
-    
+
     async function restart() {
-        await fs.remove(await fileService.getBotDataFolder());
-        startDownload();
-        await checkDependencies();
+        try {
+            startDownload();
+            await fs.remove(await fileService.getBotDataFolder());
+            await checkDependencies();
+        } catch(e) {
+            setError(e.toString());
+        }
     }
-    
+
     useEffect(() => {
         checkDependencies();
     }, []);
@@ -203,6 +195,9 @@ export function CheckJava({onFinish, isQuickLaunch} : CheckDependenciesProps) {
                 <p>Java installation has <strong>not</strong> been specified, please click below to download and install RSPeer's recommended Java JRE.
                     If you would like to specify your own Java Runtime Environment, click <a href={"#"} onClick={specifyCustomJava}>here.</a></p>
                 <Block><Button outline onClick={startDependenciesDownload}>Click To Install Dependencies Automatically</Button></Block>
+            </div>}
+            {startingDownload && !error && <div>
+                <Preloader color="blue"/> Starting Dependency Check
             </div>}
             {!extracting && startedDownload && !downloadSize.current && <div>
                 <p>Starting Download: <strong>{javaFileName}</strong></p>

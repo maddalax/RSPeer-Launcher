@@ -7,7 +7,6 @@ const path = Electron.require('path');
 const os = Electron.require('os');
 const process = Electron.require('process');
 const fs = Electron.require('fs-extra');
-const yauzl = Electron.require('yauzl');
 
 export class FileService implements IFileService {
 
@@ -18,11 +17,12 @@ export class FileService implements IFileService {
         await fs.ensureDir(folder);
         return folder;
     }
-
-
+    
     async getDatabasePath(): Promise<string> {
         const folder = await this.getRsPeerFolder();
-        return path.join(folder, 'data', 'rspeer.db');
+        const data = path.join(folder, 'data');
+        await fs.ensureDir(data);
+        return path.join(data,'rspeer.db');
     }
 
     async getHiddenRsPeerFolder(): Promise<string> {
@@ -44,13 +44,13 @@ export class FileService implements IFileService {
         const botData = await this.getBotDataFolder();
         const javaFolderName = this.getJavaFolderName();
         const os = OperatingSystems.current();
-        return os === OperatingSystem.MacOSX 
-            ? path.join(botData, javaFolderName, 'Contents', 'Home') 
+        return os === OperatingSystem.MacOSX
+            ? path.join(botData, javaFolderName, 'Contents', 'Home')
             : path.join(botData, javaFolderName);
     }
-    
-    unzip(path: string, dest: string, onData: (data: any) => any): Promise<string> {
-        return unzip(path, dest, onData);
+
+    async unzip(path: string, dest: string, onData: (data: any) => any): Promise<string> {
+        return await unzip(path, dest, onData);
     }
 
     getJavaFolderName(): string {
@@ -71,7 +71,7 @@ export class FileService implements IFileService {
     async exists(path: string): Promise<boolean> {
         return await fs.pathExists(path);
     }
-    
+
     async delete(path : string) : Promise<boolean> {
         return await fs.remove(path);
     }

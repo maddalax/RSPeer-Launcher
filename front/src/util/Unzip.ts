@@ -4,7 +4,7 @@ const yauzl = Electron.require('yauzl');
 const fs = Electron.require("fs-extra");
 const path = Electron.require('path');
 
-export function unzip(path: string, dest : string, onData: (data: any) => any): Promise<any> {
+export async function unzip(path: string, dest : string, onData: (data: any) => any): Promise<any> {
     return new Promise((resolve, reject) => {
         yauzl.open(path, {lazyEntries: true}, (err: any, zipFile: any) => {
             if(err) {
@@ -29,7 +29,7 @@ function handleZipFile(err: any, zipfile: any, dest : string, onData: (data: any
         if(!dest) {
             throw new Error("Destination is required.")
         }
-        
+
         zipfile.on("close", function () {
             resolve();
         });
@@ -41,8 +41,7 @@ function handleZipFile(err: any, zipfile: any, dest : string, onData: (data: any
         zipfile.on("entry", async function (entry: any) {
             try {
                 const destination = path.join(dest, entry.fileName);
-                console.log(destination);
-                if (/\/$/.test(destination)) {
+                if (destination.toString().endsWith(path.sep)) {
                     onData(destination);
                     await fs.ensureDir(destination);
                     zipfile.readEntry()
@@ -62,6 +61,7 @@ function handleZipFile(err: any, zipfile: any, dest : string, onData: (data: any
                     });
                 }
             } catch (e) {
+                console.error(e);
                 reject(e);
             }
         });
