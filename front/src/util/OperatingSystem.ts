@@ -1,7 +1,6 @@
 import {Electron} from "./Electron";
 
 const process = Electron.require('process');
-const os = Electron.require('os');
 
 export enum OperatingSystem {
     Windows64,
@@ -21,8 +20,7 @@ export class OperatingSystems {
             return OperatingSystem.Linux;
         }
         if(platform === 'win32') {
-            const arch = os.arch();
-            return arch === 'AMD64' ? OperatingSystem.Windows64 : OperatingSystem.Windows32;
+            return OperatingSystem.Windows32;
         }
         return OperatingSystem.Linux;
     }

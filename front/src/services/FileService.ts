@@ -62,8 +62,9 @@ export class FileService implements IFileService {
                 return "jre-8-mac64";
             case OperatingSystem.Windows32:
                 return "jre-8-win32";
+            // use 32 bit java for 64 os because it uses less ram.
             case OperatingSystem.Windows64:
-                return "jre-8-win64";
+                return "jre-8-win32";
         }
         throw new Error("Operating system not specified.");
     }
