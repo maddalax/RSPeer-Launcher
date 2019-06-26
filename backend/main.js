@@ -3,6 +3,7 @@ const {app, BrowserWindow, Tray, Menu} = require('electron');
 const path = require('path');
 const Sentry = require('@sentry/electron');
 const notifier = require('node-notifier');
+const process = require('process');
 
 const { dialog, shell } = require('electron');
 Sentry.init({dsn: 'https://6f43d99cb16342e6b38f4b0f634ae23c@sentry.io/1490824'});
@@ -19,6 +20,9 @@ let loadingWindow;
 let isQuitting;
 let isForceQuit;
 let isAlertActive;
+let isHidden;
+let hasAlertedMinimize;
+let isWindows = process.platform === 'win32';
 let tray;
 const nc = new notifier.NotificationCenter();
 
@@ -31,13 +35,24 @@ function createWindow () {
     width: 800,
     height: 768,
     show : false,
+    icon :path.join(__dirname, 'public', 'tray@2x.png'),
     webPreferences: {
       webSecurity : false,
       preload: path.join(__dirname, 'preload.js')
     }
   });
+  
+  mainWindow.removeMenu();
 
   mainWindow.on('minimize',function(event) {
+    if(!hasAlertedMinimize && isWindows) {
+      tray.displayBalloon({
+        title : 'RSPeer Launcher has been minimized to the tray.',
+        content : 'To restore, click show on the RSPeer tray icon.',
+        icon : path.join(__dirname, 'public', 'icon.png')
+      });
+      hasAlertedMinimize = true;
+    }
     event.preventDefault();
     mainWindow.hide();
   });
@@ -46,6 +61,7 @@ function createWindow () {
     if(!isQuitting) {
       event.preventDefault();
       mainWindow.hide();
+      isHidden = true;
       showNotQuitAlert();
       return false;
     }
@@ -60,8 +76,15 @@ function createWindow () {
       loadingWindow.hide();
       loadingWindow.close();
       loadingWindow = null;
-      //mainWindow.webContents.openDevTools({mode : "detach", activate : true});
     }, 800);
+  });
+  
+  mainWindow.on('show', function () {
+    isHidden = false;
+  });
+  
+  mainWindow.on('hide', function () {
+    isHidden = true;
   });
   
   mainWindow.on('closed', function () {
@@ -72,12 +95,8 @@ function createWindow () {
 
 function createLoadingWindow() {
   
-  tray = new Tray(path.join(__dirname, 'public', 'tray.png'));
+  tray = new Tray(path.join(__dirname, 'public', 'tray@2x.png'));
   tray.setToolTip('RSPeer Launcher');
-  tray.displayBalloon({
-    content : 'sup',
-    title : 'ayy'
-  });
   tray.setContextMenu(Menu.buildFromTemplate([
     {
       label: 'Show', click: function () {
@@ -91,8 +110,9 @@ function createLoadingWindow() {
       }
     }
   ]));
-  
-  
+  tray.on('clicked', function() {
+    tray.popContextMenu();
+  });
   loadingWindow = new BrowserWindow({show: false, frame: false, width : 620, height : 96, darkTheme : true});
   loadingWindow.once('show', () => {
     createWindow();
@@ -110,37 +130,52 @@ function createLoadingWindow() {
   }, 1000)
 }
 
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
-app.on('ready', createLoadingWindow);
+const isSingleton = app.requestSingleInstanceLock();
 
-// Quit when all windows are closed.
-app.on('window-all-closed', function () {
-  // On macOS it is common for applications and their menu bar
-  // to stay active until the user quits explicitly with Cmd + Q
-  if (process.platform !== 'darwin') app.quit()
-});
+if(!isSingleton) {
+  app.quit();
+} else{
+  
+  app.on('second-instance', (event, command, dir) => {
+    if (mainWindow) {
+      if (mainWindow.isMinimized() || isHidden) mainWindow.show();
+      mainWindow.focus();
+    }
+  });
+  
+  app.on('ready', createLoadingWindow);
 
-app.on('activate', function () {
-  // On macOS it's common to re-create a window in the app when the
-  // dock icon is clicked and there are no other windows open.
-  if (mainWindow === null) createLoadingWindow()
-});
+  app.on('window-all-closed', function () {
+    if (process.platform !== 'darwin') app.quit()
+  });
 
-app.on('before-quit', function () {
-  if(!isForceQuit) {
-    showNotQuitAlert();
-    return;
-  }
-  isQuitting = true;
-});
+  app.on('activate', function () {
+    if (mainWindow === null) createLoadingWindow()
+  });
+
+  app.on('before-quit', function () {
+    if(!isForceQuit) {
+      showNotQuitAlert();
+      return;
+    }
+    isQuitting = true;
+  });
+}
+
 
 function showNotQuitAlert() {
   if(isAlertActive) {
     return;
   }
   isAlertActive = true;
+  if(isWindows) {
+    tray.displayBalloon({
+      content : 'RSPeer Launcher needs to stay running to be able to launch clients remotely. To quit fully, click the task-bar icon and select quit.',
+      title : 'RSPeer Launcher is still running.',
+      icon : path.join(__dirname, 'public', 'icon.png')
+    });
+    return;
+  }
   nc.notify({
     title: 'RSPeer Launcher is still running.',
     message: 'RSPeer Launcher needs to stay running to be able to launch clients to this computer remotely. To quit fully, click the task-bar icon and select quit.',
