@@ -1,50 +1,54 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="theme-dark">
 <head>
-  <meta charset="utf-8">
-  <!--
-  Customize this policy to fit your own app's needs. For more guidance, see:
-      https://github.com/apache/cordova-plugin-whitelist/blob/master/README.md#content-security-policy
-  Some notes:
-      * gap: is required only on iOS (when using UIWebView) and is needed for JS->native communication
-      * https://ssl.gstatic.com is required only on Android and is needed for TalkBack to function properly
-      * Disables use of inline scripts in order to mitigate risk of XSS vulnerabilities. To change this:
-          * Enable inline JS: add 'unsafe-inline' to default-src
-  -->
-  <meta http-equiv="Content-Security-Policy" content="default-src * 'self' 'unsafe-inline' 'unsafe-eval' data: gap: content:">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui, viewport-fit=cover">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="theme-color" content="#2196f3">
-  <meta name="format-detection" content="telephone=no">
-  <meta name="msapplication-tap-highlight" content="no">
-  <title>RSPeer Launcher</title>
-  <!--
-    Notice the use of %PUBLIC_URL% in the tag above.
-    It will be replaced with the URL of the `public` folder during the build.
-    Only files inside the `public` folder can be referenced from the HTML.
-
-    Unlike "/favicon.ico" or "favicon.ico", "%PUBLIC_URL%/favicon.ico" will
-    work correctly both with client-side routing and a non-root public URL.
-    Learn how to configure a non-root public URL by running `npm run build`.
-  -->
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Security-Policy"
+          content="default-src * 'self' 'unsafe-inline' 'unsafe-eval' data: gap: content:">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" content="#2196f3">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="msapplication-tap-highlight" content="no">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/framework7/4.4.3/css/framework7.bundle.min.css"
+          integrity="sha256-5K6MXVSSStuP5OZ7fGmcUOq6ZcWqVgow/CE3pWkFDXU=" crossorigin="anonymous"/>
+    <title>RSPeer Launcher</title>
 </head>
-<body>
-<div id="app"></div>
-<!-- Cordova -->
-<!--
-<script src="cordova.js"></script>
--->
-
-<!--
-  This HTML file is a template.
-  If you open it directly in the browser, you will see an empty page.
-
-  You can add webfonts, meta tags, or analytics to this file.
-  The build step will place the bundled scripts into the <body> tag.
-
-  To begin the development, run `npm start`.
-  To create a production bundle, use `npm run build`.
--->
+<body class="theme-dark">
+<div id="app">
+    <div class="view view-main">
+        <div data-name="home" class="page">
+            <div class="navbar">
+                <div class="navbar-inner">
+                    <div class="title">Loading RSPeer Launcher...</div>
+                </div>
+            </div>
+            <div class="page-content">
+                <div class="text-align-center">
+                    <p>Not loading? Contact us on Discord or via the forums at https://forums.rspeer.org for help.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/framework7/4.4.3/js/framework7.js"
+        integrity="sha256-Tc25ycFezdoRAKRNdb06FtCnXsieb6Ffsd0w6nd1wmQ=" crossorigin="anonymous"></script>
+<script>
+    var app = new Framework7({
+        // App root element
+        root: '#app',
+        // App Name
+        name: 'RSPeer Launcher',
+        // App id
+        id: 'org.rspeer.launcher',
+        // Enable swipe panel
+        panel: {
+            swipe: 'left',
+        }
+        // ... other parameters
+    });
+    app.views.create('.view-main');
+</script>
 </body>
 </html>

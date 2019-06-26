@@ -48,6 +48,9 @@ export class DatabaseService {
     }
 
     public async setConfig(key: string, value: any) {
+        if(value == null) {
+            return await this.run('DELETE FROM config WHERE key = (?)', [key]);
+        }
         const query = 'INSERT OR REPLACE INTO config values (?, ?)';
         return await this.run(query, [key, value]);
     }

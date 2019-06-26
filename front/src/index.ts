@@ -1,5 +1,6 @@
 // Import React and ReactDOM
 import React from 'react';
+import * as Sentry from '@sentry/browser';
 import ReactDOM from 'react-dom';
 
 // Import Framework7
@@ -23,16 +24,16 @@ import {getService} from "./Bottle";
 import {WebsocketService} from "./services/WebsocketService";
 import {DatabaseService} from "./services/DatabaseService";
 
+Sentry.init({dsn: "https://3fd4667c24934831a4703675d6069aa5@sentry.io/1490834"});
+
 // Init Framework7-React plugin
 Framework7.use(Framework7React);
-
 
 // Mount React App
 ReactDOM.render(
   React.createElement(App),
   document.getElementById('app'),
 );
-
 
 window.onbeforeunload = () => {
     const service = getService<WebsocketService>('WebsocketService');

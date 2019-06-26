@@ -28,6 +28,8 @@ import {QuickLaunchCheckResult, QuickLaunchParseResult} from "../../models/Quick
 import {ClientLaunchService} from "../../services/ClientLaunchService";
 import Websocket from './Websocket';
 import {EventBus} from "../../event/EventBus";
+import {Electron} from "../../util/Electron";
+const {shell} = Electron.require('electron');
 
 type State = {
     user: any,
@@ -191,6 +193,14 @@ export default class HomePage extends React.Component<any, State> {
             return prev;
         })
     }
+    
+    openBotPanel = async () => {
+        this.pushLog('Opening https://app.rspeer.org/#/bot/management in your browser.');
+        const service = getService<AuthorizationService>('AuthorizationService');
+        const session = await service.getSession();
+        const token = session != null ? `?idToken=${session}` : '';
+        shell.openExternal('https://app.rspeer.org/#/bot/management' + token);
+    };
 
     render() {
         return <Page>
@@ -255,7 +265,7 @@ export default class HomePage extends React.Component<any, State> {
                                     Client</Button>
                             </Col>
                             <Col>
-                                <Button outline>Start Client With Quick Launch</Button>
+                                <Button outline onClick={this.openBotPanel}>Manage Quick Launch</Button>
                             </Col>
                         </Row>
                     </Block>
