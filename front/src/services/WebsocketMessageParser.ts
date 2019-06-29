@@ -1,6 +1,10 @@
 import {ClientLaunchConfig, ClientLaunchService} from "./ClientLaunchService";
 import {Client, QuickLaunch, RemoteQuickStartLaunch, RemoteSimpleLaunch} from "../models/QuickLaunch";
 import {AuthorizationService} from "./AuthorizationService";
+import {Electron} from "../util/Electron";
+import {shutdownApp} from "../index";
+import {GetLogsRequest} from "../models/WebsocketMessage";
+const process = Electron.require('process');
 
 export class WebsocketMessageParser {
     
@@ -13,8 +17,19 @@ export class WebsocketMessageParser {
     }
 
     public async onMessage(message : any, onMessage : (message : any) => any, onError : (error : any) => any) {
+        console.log(message);
         if(!message.type) {
             return;
+        }
+        if(message.type === 'launcher:kill') {
+            onError('Received kill command from Bot Management Panel, stopping launcher.');
+            setTimeout(() => {
+                shutdownApp();
+                process.exit(1);
+            }, 2000);
+        }
+        if(message.type === 'launcher:getLogs') {
+            
         }
         if(message.type === 'start:client') {
             return await this.startClient(message, onMessage, onError);
@@ -58,5 +73,10 @@ export class WebsocketMessageParser {
         };
         await this.launchService.launch(config);
     }
+    
+    private async getLogs(message : GetLogsRequest) : Promise<any[]> {
+        
+        return []
+    };
     
 }

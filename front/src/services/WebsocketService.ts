@@ -2,6 +2,7 @@ import {Electron} from "../util/Electron";
 import {User} from "../models/User";
 import {ApiService} from "./ApiService";
 import {guid} from "../util/Util";
+import {GetLogsRequest} from "../models/WebsocketMessage";
 
 const axios = Electron.require('axios');
 const io = Electron.require('socket.io-client');
@@ -80,5 +81,11 @@ export class WebsocketService {
             message = JSON.parse(message);
             options.onMessage && options.onMessage(message);
         });
+        this.socket.on('launcher_get_logs', async (message : string) => {
+            const request : GetLogsRequest = JSON.parse(message);
+            request.type = 'launcher:getLogs';
+            options.onMessage && options.onMessage(request);
+        });
+
     }
 }

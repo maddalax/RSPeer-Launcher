@@ -36,8 +36,12 @@ ReactDOM.render(
 );
 
 window.onbeforeunload = () => {
+  shutdownApp();
+};
+
+export function shutdownApp() {
     const service = getService<WebsocketService>('WebsocketService');
     const db = getService<DatabaseService>('Database');
     service.disconnect();
     db.close();
-};
+}

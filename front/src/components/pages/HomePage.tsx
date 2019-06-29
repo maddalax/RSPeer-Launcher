@@ -205,9 +205,6 @@ export default class HomePage extends React.Component<any, State> {
     render() {
         return <Page>
             <Navbar>
-                <NavLeft>
-                    <Link iconIos="f7:menu" iconMd="material:menu" panelOpen="left"/>
-                </NavLeft>
                 <NavTitle>RSPeer Launcher v1.03</NavTitle>
             </Navbar>
             <EditJavaPath path={this.state.javaPath} open={this.state.clearingJavaPath}
@@ -215,10 +212,16 @@ export default class HomePage extends React.Component<any, State> {
             <ContentPopup open={this.state.contentPopup.showing} title={this.state.contentPopup.title}
                           content={this.state.contentPopup.content} onFinish={() => this.toggleContentPopup()}/>
             <Toolbar bottom>
+                <small>© RSPeer 2019</small>
             </Toolbar>
-            {this.state.user && <Block strong>
-                <p>Welcome, {this.state.user.username}</p>
-            </Block>}
+            {this.state.user &&
+                <List>
+                    <ListItem title={`Welcome ${this.state.user.username}.`} view={"#"} after={"Log Out"} onClick={() => {
+                        console.log('yo');
+                    }}>
+                    </ListItem>
+                </List>
+         }
             {this.state.initializeMessage && !this.state.failedLogin && <React.Fragment>
                 <List>
                     {<ListItem header="Initializing..." title={this.state.initializeMessage}>

@@ -2,21 +2,7 @@ import React from 'react';
 
 import {
   App,
-  Panel,
-  View,
-  Statusbar,
-  Popup,
-  Page,
-  Navbar,
-  NavRight,
-  Link,
-  Block,
-  LoginScreen,
-  LoginScreenTitle,
-  List,
-  ListInput,
-  ListButton,
-  BlockFooter
+  View
 } from 'framework7-react';
 
 import routes from '../Routes';
@@ -34,16 +20,7 @@ export default function (props : any) {
 
   return (
     <App params={f7params} className={"theme-dark"}>
-      {/* Statusbar */}
-      <Statusbar />
-      
-      <Panel left cover themeDark>
-        <View url="/panel-left/" />
-      </Panel>
-      
-      {/* Main View */}
       <View id="main-view" url="/" main className="safe-areas"/>
-      
     </App>
   );
 };

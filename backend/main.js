@@ -67,7 +67,6 @@ function createWindow () {
     }
   });
 
-  //mainWindow.loadURL('http://localhost:3000');
   mainWindow.loadURL('https://rspeer-launcher.netlify.com');
 
   mainWindow.webContents.once('dom-ready', () => {
@@ -184,6 +183,7 @@ function showNotQuitAlert() {
     appID : 'org.rspeer.Launcher',
     wait : true,
     timeout : 14400,
+    sound : true,
     closeLabel : 'Quit Fully'
   }, function (err, res, action) {
     isAlertActive = false;
