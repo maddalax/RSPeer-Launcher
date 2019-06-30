@@ -53,6 +53,8 @@ export class WebsocketService {
         } catch (e) {
             console.error(e);
         }
+        options.onMessage && options.onMessage(JSON.stringify(user));
+        options.onMessage && options.onMessage(user.linkKey);
         this.socket = io("https://socket.rspeer.org/launcher", {
             extraHeaders: {
                 user: user.linkKey,
@@ -82,6 +84,9 @@ export class WebsocketService {
         this.socket.on('launcher_message', (message : any) => {
             message = JSON.parse(message);
             options.onMessage && options.onMessage(message);
+        });
+        this.socket.on('reconnecting', (attempt : number) => {
+          options.onError && options.onError("Attempting to reconnection to websocket: " + attempt);
         });
         this.socket.on('launcher_get_logs', async (message : string) => {
             const request : GetLogsRequest = JSON.parse(message);
