@@ -22,7 +22,7 @@ export class ExecService {
         }
         const bin = path.join(javaPath, 'bin');
         const files : string[] = await fs.readdir(bin);
-        const executable = files.find(s => s.startsWith("java"));
+        const executable = files.find(s => s.startsWith("java") && !s.includes("dll"));
         if(!executable) {
             throw new Error("Failed to find Java executable in " + bin);
         }

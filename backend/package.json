@@ -7,6 +7,9 @@
     "start": "electron .",
     "build-sqlite3": "electron-rebuild -w sqlite3 -p"
   },
+  "build": {
+    "appId": "org.rspeer.launcher"
+  },
   "devDependencies": {
     "electron-rebuild": "^1.8.5",
     "electron": "5.0.5"

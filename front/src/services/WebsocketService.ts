@@ -71,6 +71,9 @@ export class WebsocketService {
         this.socket.on('disconnect', () => {
            options.onDisconnect && options.onDisconnect(); 
         });
+        this.socket.on('error', (err : any) => {
+            options.onError && options.onError(err);
+        });
         this.socket.on('connect', () => {
             options.onConnect && options.onConnect();
         });

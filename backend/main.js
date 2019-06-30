@@ -1,5 +1,5 @@
 // Modules to control application life and create native browser window
-const {app, BrowserWindow, Tray, Menu} = require('electron');
+const {app, BrowserWindow, Tray, Menu, Notification} = require('electron');
 const path = require('path');
 const Sentry = require('@sentry/electron');
 const notifier = require('node-notifier');
@@ -180,7 +180,7 @@ function showNotQuitAlert() {
     message: 'RSPeer Launcher needs to stay running to be able to launch clients to this computer remotely. To quit fully, click the task-bar icon and select quit.',
     icon: path.join(__dirname, 'public', 'tray@2x.png'),
     actions : ['More Info'],
-    appID : 'org.rspeer.Launcher',
+    appID : 'org.rspeer.launcher',
     wait : true,
     timeout : 14400,
     sound : true,
