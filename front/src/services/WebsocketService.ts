@@ -65,8 +65,7 @@ export class WebsocketService {
                     ip : ip,
                     linkKey : user.linkKey
                 })
-            },
-            forceNew : true
+            }
         });
         this.socket.on('disconnect', () => {
            options.onDisconnect && options.onDisconnect(); 
