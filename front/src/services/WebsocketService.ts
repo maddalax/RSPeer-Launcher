@@ -53,8 +53,13 @@ export class WebsocketService {
         } catch (e) {
             console.error(e);
         }
-        options.onMessage && options.onMessage(JSON.stringify(user));
-        options.onMessage && options.onMessage(user.linkKey);
+        const key = await this.apiService.get('botLauncher/getKey');
+        if(!user.linkKey && (!key || key.error)) {
+            options.onError && options.onError("Failed to get link key. " + JSON.stringify(key));
+            return;
+        }
+        user.linkKey = user.linkKey || key;
+        options.onMessage && options.onMessage(key);
         this.socket = io("https://socket.rspeer.org/launcher", {
             extraHeaders: {
                 user: user.linkKey,
