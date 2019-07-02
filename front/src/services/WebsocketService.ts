@@ -12,7 +12,8 @@ export interface WebsocketOptions {
     onConnect? : () => any
     onDisconnect? : () => any
     onMessage? : (message : any) => any
-    onError? : (err : any) => any
+    onError? : (err : any) => any,
+    onReconnect? : (attempt : number) => any
 }
 
 export class WebsocketService {
@@ -42,6 +43,17 @@ export class WebsocketService {
         this.socket && this.socket.disconnect();
     }
 
+    private async tryGetKey(user : User) : Promise<string> {
+        if(user.linkKey) {
+            return user.linkKey;
+        }
+        const key = await this.apiService.get('botLauncher/getKey');
+        if((!key || key.error)) {
+            throw new Error("Failed to get link key. " + JSON.stringify(key));
+        }
+        return key;
+    }
+    
     public async connect(user : User, options : WebsocketOptions) {
         if(this.socket) {
             return;
@@ -53,13 +65,15 @@ export class WebsocketService {
         } catch (e) {
             console.error(e);
         }
-        const key = await this.apiService.get('botLauncher/getKey');
-        if(!user.linkKey && (!key || key.error)) {
-            options.onError && options.onError("Failed to get link key. " + JSON.stringify(key));
+        if(!user.linkKey) {
+            
+        } 
+        try {
+            user.linkKey = await this.tryGetKey(user);
+        } catch (e) {
+            options.onError && options.onError(e);
             return;
         }
-        user.linkKey = user.linkKey || key;
-        options.onMessage && options.onMessage(key);
         this.socket = io("https://socket.rspeer.org/launcher", {
             extraHeaders: {
                 user: user.linkKey,
@@ -91,7 +105,7 @@ export class WebsocketService {
             options.onMessage && options.onMessage(message);
         });
         this.socket.on('reconnecting', (attempt : number) => {
-          options.onError && options.onError("Attempting to reconnection to websocket: " + attempt);
+          options.onReconnect && options.onReconnect(attempt);
         });
         this.socket.on('launcher_get_logs', async (message : string) => {
             const request : GetLogsRequest = JSON.parse(message);

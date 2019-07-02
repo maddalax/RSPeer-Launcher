@@ -1,4 +1,15 @@
-import {Block, Button, Icon, Link, List, ListInput, Navbar, NavRight, Page, Popup, View} from "framework7-react";
+import {
+    Block,
+    Button,
+    Link,
+    List,
+    ListInput,
+    Navbar,
+    NavRight,
+    Page,
+    Popup,
+    View,
+} from "framework7-react";
 import * as React from "react";
 import {useEffect, useState} from "react";
 import {getService} from "../../Bottle";
@@ -13,7 +24,8 @@ type Props = {
     open: boolean
     onFinish: (index: number) => any,
     onError: (error: any) => any
-    onLog: (log: any) => any
+    onLog: (log: any) => any,
+    onBotPanelOpen : () => any;
 }
 
 const launchService = getService<ClientLaunchService>('ClientLaunchService');
@@ -21,7 +33,7 @@ const remoteLauncher = getService<RemoteLauncherService>('RemoteLauncherService'
 const authService = getService<AuthorizationService>('AuthorizationService');
 
 
-export default ({open, onFinish, onError, onLog}: Props) => {
+export default ({open, onFinish, onError, onLog, onBotPanelOpen}: Props) => {
 
     const [error, setError] = useState('');
     const [count, setCount] = useState(1);
@@ -203,6 +215,13 @@ export default ({open, onFinish, onError, onLog}: Props) => {
                         {error && <Block>
                             <p style={{color: '#ff6767'}}><strong>{error}</strong></p>
                         </Block>}
+                        <Block>
+                            <p>Looking for more advanced client launching, such as the ability to specify script, runescape accounts, and proxies? 
+                                Check out the <Link href={"#"} onClick={() => {
+                                    onFinish(0);
+                                    onBotPanelOpen();
+                                }}>Bot Management Panel.</Link></p>
+                        </Block>
                     </Block>
                 </List>
             </Page>

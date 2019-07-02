@@ -28,7 +28,8 @@ export class ExecService {
         }
         const fullPath = path.join(bin, executable);
         const commands = [...vmArgs, '-jar', jarPath, ...appArgs].filter(s => s);
-        return await execa(fullPath, commands, { detached: true });
+        // fire and forget
+        execa(fullPath, commands, { detached: true, stdio: 'ignore' });
     }
     
 }

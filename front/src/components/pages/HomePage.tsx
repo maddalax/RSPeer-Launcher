@@ -1,10 +1,9 @@
 import React from 'react';
+import * as Sentry from '@sentry/browser';
 import {
     Page,
     Navbar,
-    NavLeft,
     NavTitle,
-    Link,
     Toolbar,
     Block,
     BlockTitle,
@@ -29,6 +28,7 @@ import {ClientLaunchService} from "../../services/ClientLaunchService";
 import Websocket from './Websocket';
 import {EventBus} from "../../event/EventBus";
 import {Electron} from "../../util/Electron";
+import {formatDate} from "../../util/Util";
 const {shell} = Electron.require('electron');
 
 type State = {
@@ -165,9 +165,11 @@ export default class HomePage extends React.Component<any, State> {
         this.setState({javaPath : path || ''});
     };
 
-    pushError = (err: string) => {
+    pushError = (err: any) => {
+        console.error(err);
+        Sentry.captureException(err);
         this.setState(prev => {
-            prev.errorLogs.unshift(err.toString());
+            prev.logs.unshift(`${formatDate(Date.now() as any, true)} - ${err.toString()}`);
             if (prev.errorLogs.length > 100) {
                 prev.errorLogs.splice(prev.errorLogs.length - 1, 1);
             }
@@ -177,7 +179,7 @@ export default class HomePage extends React.Component<any, State> {
 
     pushLog = (log: string) => {
         this.setState(prev => {
-            prev.logs.unshift(log.toString());
+            prev.logs.unshift(`${formatDate(Date.now() as any, true)} - ${log.toString()}`);
             if (prev.logs.length > 100) {
                 prev.logs.splice(prev.logs.length - 1, 1);
             }
@@ -198,8 +200,9 @@ export default class HomePage extends React.Component<any, State> {
         this.pushLog('Opening https://app.rspeer.org/#/bot/management in your browser.');
         const service = getService<AuthorizationService>('AuthorizationService');
         const session = await service.getSession();
-        const token = session != null ? `?idToken=${session}` : '';
-        shell.openExternal('https://app.rspeer.org/#/bot/management' + token);
+        const menu = "menu=bot_panel";
+        const qs = session != null ? `?idToken=${session}&${menu}` : `?${menu}`;
+        shell.openExternal('https://app.rspeer.org/#/bot/management' + qs);
     };
 
     render() {
@@ -254,6 +257,7 @@ export default class HomePage extends React.Component<any, State> {
                 {this.state.user != null && <React.Fragment>
                     <BlockTitle>Client Management</BlockTitle>
                     <StartClientSimple path={this.state.clientPath} open={this.state.openClientSimple}
+                                       onBotPanelOpen={this.openBotPanel}
                                        onError={(err) => {
                                            this.pushError(err);
                                        }}
@@ -268,7 +272,7 @@ export default class HomePage extends React.Component<any, State> {
                                     Client</Button>
                             </Col>
                             <Col>
-                                <Button outline onClick={this.openBotPanel}>Manage Quick Launch</Button>
+                                <Button outline onClick={this.openBotPanel}>Bot Management Panel</Button>
                             </Col>
                         </Row>
                     </Block>
@@ -276,11 +280,11 @@ export default class HomePage extends React.Component<any, State> {
             </React.Fragment>}
             {this.state.errorLogs.length > 0 && <React.Fragment>
                 <List>
-                    <ListItem title="Last 100 Errors">
+                    <ListItem title="Recent Errors">
                         <Button onClick={() => this.setState({errorLogs: []})}>Clear Errors</Button>
                     </ListItem>
                     {this.state.errorLogs.map(e => {
-                        return <ListItem style={{color: '#ff6767'}} title={e.toString()} after={"View"} view={"#"}
+                        return <ListItem style={{color: '#ff6767'}} key={e.toString()} title={e.toString()} after={"View"} view={"#"}
                                          onClick={() => {
                                              this.toggleContentPopup({
                                                  title: 'Viewing Error',
@@ -293,13 +297,13 @@ export default class HomePage extends React.Component<any, State> {
                 </List></React.Fragment>}
             {<React.Fragment>
                 <List>
-                    <ListItem title="Last 100 Logs">
+                    <ListItem title="Recent Logs">
                         <Button onClick={() => this.setState({logs: []})}>Clear Logs</Button>
                     </ListItem>
                     {this.state.logs.length === 0 && <ListItem style={{color: '#4cd964'}} title={'You have no logs to show.'}>
                     </ListItem>}
                     {this.state.logs.map(e => {
-                        return <ListItem style={{color: '#4cd964'}} title={e.toString()} after={"View"}
+                        return <ListItem key={e.toString()} style={{color: '#4cd964'}} title={e.toString()} after={"View"}
                                          view={"#"}
                                          onClick={() => {
                                              this.toggleContentPopup({

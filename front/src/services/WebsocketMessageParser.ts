@@ -17,8 +17,11 @@ export class WebsocketMessageParser {
     }
 
     public async onMessage(message : any, onMessage : (message : any) => any, onError : (error : any) => any) {
-        console.log(message);
+        if(!message) {
+            return;
+        }
         if(!message.type) {
+            
             return;
         }
         if(message.type === 'launcher:kill') {

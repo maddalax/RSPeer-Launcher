@@ -17,7 +17,6 @@ export class DatabaseService {
     private async setup() {
         if (!this.db) {
             const path = await this.fileService.getDatabasePath();
-            console.log('db path', path);
             this.db = new sqlite3.Database(path);
             const migrate = this.migrations.map(m => this.run(m));
             await Promise.all(migrate);
