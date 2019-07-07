@@ -13,7 +13,7 @@ export class FileService implements IFileService {
     async getRsPeerFolder(): Promise<string> {
         const isWin = process.platform === "win32";
         const home = this.getHomeDirectory();
-        const folder = path.join(isWin ? path.join(home, 'Documents') : home, 'rspeer', 'cache');
+        const folder = path.join(isWin ? path.join(home, 'Documents') : home, 'RSPeer', 'cache');
         await fs.ensureDir(folder);
         return folder;
     }
