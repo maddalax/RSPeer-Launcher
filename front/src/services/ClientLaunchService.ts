@@ -10,6 +10,7 @@ export interface ClientLaunchConfig {
     jvmArgs? : string[],
     appArgs? : string[],
     count?: number,
+    sleep? : number,
     quickLaunch: QuickLaunch
 }
 
@@ -22,6 +23,8 @@ interface ClientLaunchState {
 export class ClientLaunchService {
 
     public static readonly DEFAULT_JVM_ARGS = ['-Xmx768m', '-Djava.net.preferIPv4Stack=true', '-Djava.net.preferIPv4Addresses=true', '-Xss2m'];
+    private static readonly SLEEP = 10;
+    
     
     private clientService: ClientDependencyService;
     private execService : ExecService;
@@ -33,17 +36,18 @@ export class ClientLaunchService {
 
     public async launch(config: ClientLaunchConfig) {
         const isQuickLaunch = config.quickLaunch && config.quickLaunch.clients && config.quickLaunch.clients.length > 0;
+        config.count = config.count || 1;
         config.count = isQuickLaunch ? config.quickLaunch.clients.length : config.count;
-        config.onLog(`Attempting to start ${config.count} clients. Waiting 10 seconds between each launch.`);
+        const length = this.getSleep(config);
+        config.onLog(`Starting ${config.count} clients. Waiting ${length / 1000} seconds between each launch.`);
         if(isQuickLaunch) {
             return await this.launchWithQuickLaunch(config);
         }
-        config.count = config.count || 1;
         for (let i = 0; i < config.count; i++) {
             const state : ClientLaunchState = {index : i, isQuickLaunch : false};
             // do not await this as the await never finishes due to the process being upon until client closes.
             this.doLaunch(config, state);
-            await sleep(10000);
+            await this.doSleep(config);
         }
     }
     
@@ -59,7 +63,7 @@ export class ClientLaunchService {
             config.appArgs = this.getAppArgs(state);
             // do not await this as the await never finishes due to the process being upon until client closes.
             this.doLaunch(config, state);
-            await sleep(10000);
+            await this.doSleep(config);
         }
     }
 
@@ -111,6 +115,22 @@ export class ClientLaunchService {
         };
         let base64 = btoa(JSON.stringify(payload));
         return ['-qs', base64]
+    }
+    
+    private getSleep = (config : ClientLaunchConfig) : number => {
+        const multiplier = 1000;
+        if(config.sleep) {
+            return config.sleep > multiplier ? config.sleep : config.sleep * multiplier;
+        }
+        return ClientLaunchService.SLEEP * multiplier;
+    };
+    
+    private doSleep = async (config : ClientLaunchConfig) => {
+        config.count = config.count || 1;
+        if(config.count > 1) {
+            const length = await this.getSleep(config);
+            await sleep(length);
+        }
     }
 
 }

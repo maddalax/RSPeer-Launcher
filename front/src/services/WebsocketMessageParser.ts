@@ -21,7 +21,6 @@ export class WebsocketMessageParser {
             return;
         }
         if(!message.type) {
-            
             return;
         }
         if(message.type === 'launcher:kill') {
@@ -73,6 +72,8 @@ export class WebsocketMessageParser {
             count : quickLaunch.clients.length,
             onLog : onMessage,
             onError : onError,
+            sleep : message.sleep,
+            jvmArgs : message.jvmArgs != null ? message.jvmArgs.split(" ") : []
         };
         await this.launchService.launch(config);
     }
