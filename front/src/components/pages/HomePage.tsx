@@ -23,12 +23,13 @@ import {CheckClient} from "./CheckClient";
 import StartClientSimple from "./StartClientSimple";
 import ContentPopup from "./ContentPopup";
 import {QuickLaunchArgService} from "../../services/QuickLaunchArgService";
-import {QuickLaunchCheckResult, QuickLaunchParseResult} from "../../models/QuickLaunch";
+import {QuickLaunch, QuickLaunchCheckResult, QuickLaunchParseResult} from "../../models/QuickLaunch";
 import {ClientLaunchService} from "../../services/ClientLaunchService";
 import Websocket from './Websocket';
 import {EventBus} from "../../event/EventBus";
 import {Electron} from "../../util/Electron";
-import {formatDate} from "../../util/Util";
+import {formatDate, jsonClone} from "../../util/Util";
+import {LauncherVersion} from "../../Config";
 const {shell} = Electron.require('electron');
 
 type State = {
@@ -39,6 +40,7 @@ type State = {
         title: string,
         content: any
     }
+    quickLaunch : QuickLaunch | null,
     clientPath: string,
     openClientSimple: boolean,
     openClientAdvanced: boolean,
@@ -68,6 +70,7 @@ export default class HomePage extends React.Component<any, State> {
             checkingJavaDependency: false,
             checkingClientDependency: false,
             failedLogin : false,
+            quickLaunch : null,
             errorLogs: [],
             logs: [],
             contentPopup: {
@@ -107,6 +110,20 @@ export default class HomePage extends React.Component<any, State> {
         EventBus.getInstance().unregister("on_error", this.onErrorRecieved);
         EventBus.getInstance().unregister("on_log", this.onLogRecieved);
     }
+    
+    async componentDidUpdate(prevProps: Readonly<any>, prevState: Readonly<State>, snapshot?: any) {
+        if(this.state.javaPath && this.state.executingQuickLaunch && this.state.quickLaunch) {
+            const qs = jsonClone(this.state.quickLaunch);
+            this.setState({executingQuickLaunch : false, quickLaunch : null}, async () => {
+                const clientLaunchService : ClientLaunchService = getService<ClientLaunchService>('ClientLaunchService');
+                await clientLaunchService.launch({
+                    quickLaunch : qs,
+                    onLog : this.pushLog,
+                    onError : this.pushError,
+                });
+            });
+        }
+    }
 
     async checkQuickLaunch(): Promise<QuickLaunchCheckResult> {
         const check: QuickLaunchCheckResult = {shouldLogin: false, failedLogin: false};
@@ -134,21 +151,15 @@ export default class HomePage extends React.Component<any, State> {
                 await service.login(result);
             } catch (e) {
                 check.failedLogin = true;
-                const error = `Failed to login. ${e.error || JSON.stringify(e)}`;
+                const error = `Failed to login to RSPeer. ${e.error || JSON.stringify(e)}`;
                 this.setState({initializeMessage: error});
-                this.pushError(error);
+                this.pushError(error, false);
                 return check;
             }
         }
         this.setState({initializeMessage: 'Attempting to start clients using specified quick launch configuration.'});
         this.pushLog('Attempting to start clients using specified quick launch configuration.');
-        this.setState({executingQuickLaunch : true});
-        const clientLaunchService : ClientLaunchService = getService<ClientLaunchService>('ClientLaunchService');
-        await clientLaunchService.launch({
-            quickLaunch : result.config,
-            onLog : this.pushLog,
-            onError : this.pushError
-        });
+        this.setState({executingQuickLaunch : true, quickLaunch : result.config});
         return check;
     }
 
@@ -165,11 +176,11 @@ export default class HomePage extends React.Component<any, State> {
         this.setState({javaPath : path || ''});
     };
 
-    pushError = (err: any) => {
+    pushError = (err: any, sentry : boolean = true) => {
         console.error(err);
-        Sentry.captureException(err);
+        sentry && Sentry.captureException(err);
         this.setState(prev => {
-            prev.logs.unshift(`${formatDate(Date.now() as any, true)} - ${err.toString()}`);
+            prev.errorLogs.unshift(`${formatDate(Date.now() as any, true)} - ${err.toString()}`);
             if (prev.errorLogs.length > 100) {
                 prev.errorLogs.splice(prev.errorLogs.length - 1, 1);
             }
@@ -208,7 +219,7 @@ export default class HomePage extends React.Component<any, State> {
     render() {
         return <Page>
             <Navbar>
-                <NavTitle>RSPeer Launcher v1.10</NavTitle>
+                <NavTitle>RSPeer Launcher v{LauncherVersion}</NavTitle>
             </Navbar>
             <EditJavaPath path={this.state.javaPath} open={this.state.clearingJavaPath}
                           onFinish={this.onFinishPathEdit}/>

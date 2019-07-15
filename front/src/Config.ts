@@ -1,0 +1,1 @@
+export const LauncherVersion = '1.11';

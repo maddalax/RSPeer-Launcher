@@ -26,4 +26,8 @@ export const formatDate = (value : string, includeTime : boolean = true) => {
     const date = new Date(value);
     return includeTime ? date.toLocaleString() : date.toDateString();
 };
+
+export const jsonClone = (obj : any) => {
+    return JSON.parse(JSON.stringify(obj));
+};
     
