@@ -8,6 +8,20 @@ const axios = Electron.require('axios');
 const io = Electron.require('socket.io-client');
 const os = Electron.require('os');
 
+/*
+const nsq = Electron.require('nsqjs');
+
+const reader = new nsq.Reader('test', 'launcher', {
+    lookupdHTTPAddresses: 'nsq.rspeer.org:4161'
+});
+
+reader.connect();
+
+reader.on('message', (message : any) => {
+    console.log('Received message [%s]: %s', message.body.toString());
+});
+ */
+
 export interface WebsocketOptions {
     onConnect? : () => any
     onDisconnect? : () => any
