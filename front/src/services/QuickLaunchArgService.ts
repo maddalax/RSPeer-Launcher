@@ -28,7 +28,7 @@ export class QuickLaunchArgService {
         if (parseResult.noArgs) {
             return parseResult;
         }
-        const arg = config[0];
+        const arg = config[config.length - 1];
         parseResult.logs.push(`Attempting to parse quick launch configuration from specified argument "${arg}"`);
         const methods = [this.checkFile, this.checkBase64, this.checkHttp];
         for (let method of methods) {
@@ -68,6 +68,9 @@ export class QuickLaunchArgService {
         let args: string[] = process.argv;
         args = args.filter(s => {
             if(!s) {
+                return false;
+            }
+            if(s.endsWith('rspeer-launcher')) {
                 return false;
             }
             if(s.endsWith('.json') || s.endsWith('.txt') || s.includes('http')) {

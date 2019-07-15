@@ -208,7 +208,7 @@ export default class HomePage extends React.Component<any, State> {
     render() {
         return <Page>
             <Navbar>
-                <NavTitle>RSPeer Launcher v1.09</NavTitle>
+                <NavTitle>RSPeer Launcher v1.10</NavTitle>
             </Navbar>
             <EditJavaPath path={this.state.javaPath} open={this.state.clearingJavaPath}
                           onFinish={this.onFinishPathEdit}/>
