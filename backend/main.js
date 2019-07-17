@@ -4,7 +4,7 @@ const path = require('path');
 const Sentry = require('@sentry/electron');
 const notifier = require('node-notifier');
 const process = require('process');
-const {isProd, isDev, isStaging} = require('./env');
+const {isProd, isDev, isStaging, openDevTools} = require('./env');
 
 const {dialog, shell} = require('electron');
 
@@ -85,6 +85,12 @@ function createWindow() {
     mainWindow.webContents.once('dom-ready', () => {
         setTimeout(() => {
             mainWindow.show();
+            if(openDevTools) {
+                mainWindow.webContents.openDevTools({
+                    mode: "detach"
+                });
+            }
+            mainWindow.focus();
             loadingWindow.hide();
             loadingWindow.close();
             loadingWindow = null;
