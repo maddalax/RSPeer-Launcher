@@ -29,7 +29,7 @@ import Websocket from './Websocket';
 import {EventBus} from "../../event/EventBus";
 import {Electron} from "../../util/Electron";
 import {formatDate, jsonClone} from "../../util/Util";
-import {isDev, LauncherVersion} from "../../Config";
+import {isDev, isStaging, LauncherVersion} from "../../Config";
 const {shell} = Electron.require('electron');
 
 type State = {
@@ -216,10 +216,16 @@ export default class HomePage extends React.Component<any, State> {
         shell.openExternal('https://app.rspeer.org/#/bot/management' + qs);
     };
 
+    getEnviromentTitle() {
+        if(isDev()) return 'Development';    
+        if(isStaging()) return 'Staging';
+        return '';
+    }
+    
     render() {
         return <Page>
             <Navbar>
-                <NavTitle>RSPeer Launcher v{LauncherVersion} {`${isDev() ? '(Development Mode)' : ''}`}</NavTitle>
+                <NavTitle>RSPeer Launcher v{LauncherVersion} {this.getEnviromentTitle()}</NavTitle>
             </Navbar>
             <EditJavaPath javaPath={this.state.javaPath} open={this.state.clearingJavaPath}
                           onFinish={this.onFinishPathEdit}/>

@@ -4,7 +4,7 @@ import {AuthorizationService} from "./AuthorizationService";
 import {Http} from "../util/Http";
 
 declare global {
-    interface Window { rspeer: {apiUrl : string } }
+    interface Window { rspeer: {apiUrl : string, env : {isDev : boolean, isStaging : boolean, isProd : boolean} } }
 }
 
 export interface ApiConfig {
