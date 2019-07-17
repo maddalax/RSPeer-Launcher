@@ -4,6 +4,7 @@ import {useState} from "react";
 import {getService} from "../../Bottle";
 import {DatabaseService} from "../../services/DatabaseService";
 import {FileService} from "../../services/FileService";
+import {EventBus} from "../../event/EventBus";
 const path = require('path');
 
 type Props = {
@@ -17,17 +18,20 @@ export default ({javaPath, open, onFinish} : Props) => {
     const [loading, setLoading] = useState(false);
     
     async function clearJavaPath() {
-        console.log('clearing.');
-        setLoading(true);
-        const db = getService<DatabaseService>('Database');
-        const javaPath = await db.getConfig('javaPath');
-        await db.setConfig('javaPath', null);
-        const file = getService<FileService>('FileService');
-        const botDataFolder = await file.getBotDataFolder();
-        if(file.inBotDataFolder(javaPath)) {
-            const root = path.join(javaPath, '../', '../');
-            await file.delete(root);
-            await file.delete(path.join(botDataFolder, '__MACOSX'))
+        try {
+            setLoading(true);
+            const db = getService<DatabaseService>('Database');
+            const javaPath = await db.getConfig('javaPath');
+            await db.setConfig('javaPath', null);
+            const file = getService<FileService>('FileService');
+            const botDataFolder = await file.getBotDataFolder();
+            if (file.inBotDataFolder(javaPath)) {
+                const root = path.join(javaPath, '../', '../');
+                await file.delete(root);
+                await file.delete(path.join(botDataFolder, '__MACOSX'))
+            }
+        } catch (e) {
+            EventBus.getInstance().dispatch('on_error', `Failed to delete java path, reason: ${e.toString()}.`);
         }
         setTimeout(() => {
             setLoading(false);

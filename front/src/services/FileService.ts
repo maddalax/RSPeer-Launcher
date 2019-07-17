@@ -106,6 +106,7 @@ export class FileService implements IFileService {
     }
 
     async delete(path: string | null): Promise<boolean> {
+        console.log('attempting to delete', path);
         return path && await fs.remove(path);
     }
 
