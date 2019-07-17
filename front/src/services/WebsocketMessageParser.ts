@@ -16,7 +16,7 @@ export class WebsocketMessageParser {
         this.authService = authService;
     }
 
-    public async onMessage(message : any, onMessage : (message : any) => any, onError : (error : any) => any) {
+    public async onMessage(message : any, onMessage : (message : any) => any, onError : (error : any, sentry? : boolean) => any) {
         if(!message) {
             return;
         }
@@ -24,7 +24,7 @@ export class WebsocketMessageParser {
             return;
         }
         if(message.type === 'launcher:kill') {
-            onError('Received kill command from Bot Management Panel, stopping launcher.');
+            onError('Received kill command from Bot Management Panel, stopping launcher.', false);
             setTimeout(() => {
                 shutdownApp();
                 process.exit(1);

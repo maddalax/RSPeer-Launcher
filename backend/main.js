@@ -6,10 +6,15 @@ const notifier = require('node-notifier');
 const process = require('process');
 
 const { dialog, shell } = require('electron');
-Sentry.init({dsn: 'https://6f43d99cb16342e6b38f4b0f634ae23c@sentry.io/1490824'});
+
+const isDev = process.env.NODE_ENV === 'development';
+
+if(!isDev) {
+  Sentry.init({dsn: 'https://6f43d99cb16342e6b38f4b0f634ae23c@sentry.io/1490824'});
+}
 
 process.on('uncaughtException', function (error) {
-  Sentry.captureException(error);
+  !isDev && Sentry.captureException(error);
   dialog.showErrorBox('An uncaught error has occured. Please restart the launcher.', error.toString());
 });
 
@@ -63,11 +68,15 @@ function createWindow () {
       mainWindow.hide();
       isHidden = true;
       showNotQuitAlert();
-      return false;
+      return false
     }
   });
 
-  mainWindow.loadURL('https://rspeer-launcher.netlify.com');
+  if(isDev) {
+    mainWindow.loadURL('http://localhost:3000');
+  } else {
+    mainWindow.loadURL('https://rspeer-launcher.netlify.com');
+  }
 
   mainWindow.webContents.once('dom-ready', () => {
     setTimeout(() => {

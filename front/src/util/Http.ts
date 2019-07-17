@@ -1,6 +1,6 @@
 import {Electron} from "./Electron";
 
-const https = Electron.require('https');
+const https = Electron.require('follow-redirects').https;
 const fs = Electron.require('fs-extra');
 
 export class Http {
@@ -43,6 +43,7 @@ export class Http {
                     });
                 }, 1000);
                 if (response.statusCode !== 200) {
+                    console.log(response.statusCode);
                     interval && clearInterval(interval);
                     return rej('Response status was ' + response.statusCode);
                 }
@@ -56,6 +57,7 @@ export class Http {
                     console.log(err);
                 })
             }).on('error', function(err : any) {
+                console.error(err);
                 interval && clearInterval(interval);
                 fs.unlink(dest);
                 rej(err);

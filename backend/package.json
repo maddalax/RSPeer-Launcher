@@ -3,25 +3,69 @@
   "version": "1.0.0",
   "description": "RSPeer Launcher",
   "main": "main.js",
+  "homepage": "https://rspeer.org",
   "scripts": {
     "start": "electron .",
+    "start:dev" : "cross-env NODE_ENV=development electron .",
     "build-sqlite3": "electron-rebuild -w sqlite3 -p"
   },
-  "build": {
-    "appId": "org.rspeer.launcher"
+  "author": {
+    "name": "RSPeer",
+    "email": "rspeerbotting@gmail.com",
+    "url": "https://rspeer.org"
   },
   "devDependencies": {
-    "electron-rebuild": "^1.8.5",
-    "electron": "5.0.5"
+    "cross-env": "^5.2.0",
+    "electron": "5.0.5",
+    "electron-rebuild": "^1.8.5"
+  },
+  "build": {
+    "productName": "RSPeer Launcher",
+    "appId": "org.rspeer.launcher",
+    "files": [
+      "package.json",
+      "main.js",
+      "preload.js",
+      "renderer.js",
+      "public/*"
+    ],
+    "dmg": {
+      "contents": [
+        {
+          "x": 130,
+          "y": 220
+        },
+        {
+          "x": 410,
+          "y": 220,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ]
+    },
+    "linux": {
+      "target": [
+        "deb",
+        "tar.gz"
+      ],
+      "category": "Development"
+    },
+    "directories": {
+      "buildResources": "public",
+      "output": "release"
+    }
   },
   "dependencies": {
     "@sentry/electron": "^0.17.1",
     "axios": "^0.19.0",
     "execa": "^1.0.0",
+    "follow-redirects": "^1.7.0",
     "fs-extra": "^8.0.1",
     "node-notifier": "^5.4.0",
+    "nsqjs": "^0.12.0",
     "socket.io-client": "^2.2.0",
     "sqlite3": "^4.0.9",
+    "tar": "^4.4.10",
     "typescript": "^3.5.2",
     "yauzl": "^2.10.0"
   }

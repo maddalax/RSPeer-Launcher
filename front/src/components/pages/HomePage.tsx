@@ -29,7 +29,7 @@ import Websocket from './Websocket';
 import {EventBus} from "../../event/EventBus";
 import {Electron} from "../../util/Electron";
 import {formatDate, jsonClone} from "../../util/Util";
-import {LauncherVersion} from "../../Config";
+import {isDev, LauncherVersion} from "../../Config";
 const {shell} = Electron.require('electron');
 
 type State = {
@@ -177,7 +177,7 @@ export default class HomePage extends React.Component<any, State> {
     };
 
     pushError = (err: any, sentry : boolean = true) => {
-        console.error(err);
+        console.error(err, sentry);
         sentry && Sentry.captureException(err);
         this.setState(prev => {
             prev.errorLogs.unshift(`${formatDate(Date.now() as any, true)} - ${err.toString()}`);
@@ -219,9 +219,9 @@ export default class HomePage extends React.Component<any, State> {
     render() {
         return <Page>
             <Navbar>
-                <NavTitle>RSPeer Launcher v{LauncherVersion}</NavTitle>
+                <NavTitle>RSPeer Launcher v{LauncherVersion} {`${isDev() ? '(Development Mode)' : ''}`}</NavTitle>
             </Navbar>
-            <EditJavaPath path={this.state.javaPath} open={this.state.clearingJavaPath}
+            <EditJavaPath javaPath={this.state.javaPath} open={this.state.clearingJavaPath}
                           onFinish={this.onFinishPathEdit}/>
             <ContentPopup open={this.state.contentPopup.showing} title={this.state.contentPopup.title}
                           content={this.state.contentPopup.content} onFinish={() => this.toggleContentPopup()}/>

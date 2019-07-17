@@ -4,14 +4,15 @@ import {useState} from "react";
 import {getService} from "../../Bottle";
 import {DatabaseService} from "../../services/DatabaseService";
 import {FileService} from "../../services/FileService";
+const path = require('path');
 
 type Props = {
-    path : string
+    javaPath : string
     open : boolean
     onFinish : (cleared : boolean) => any
 }
 
-export default ({path, open, onFinish} : Props) => {
+export default ({javaPath, open, onFinish} : Props) => {
     
     const [loading, setLoading] = useState(false);
     
@@ -19,9 +20,15 @@ export default ({path, open, onFinish} : Props) => {
         console.log('clearing.');
         setLoading(true);
         const db = getService<DatabaseService>('Database');
+        const javaPath = await db.getConfig('javaPath');
         await db.setConfig('javaPath', null);
         const file = getService<FileService>('FileService');
-        await file.delete(await file.getJavaPath());
+        const botDataFolder = await file.getBotDataFolder();
+        if(file.inBotDataFolder(javaPath)) {
+            const root = path.join(javaPath, '../', '../');
+            await file.delete(root);
+            await file.delete(path.join(botDataFolder, '__MACOSX'))
+        }
         setTimeout(() => {
             setLoading(false);
             onFinish(true);
@@ -41,7 +48,7 @@ export default ({path, open, onFinish} : Props) => {
                 <Block>
                     <p>You can clear and set a new Java path for the launcher to use. To do so, click the button below. Once you
                         clear your Java path, you will have the option of downloading the bundled java path or selecting your own.</p>
-                    <p>Current path: <strong>{path}</strong></p>
+                    <p>Current path: <strong>{javaPath}</strong></p>
                     {!loading && <Button raised outline onClick={clearJavaPath}>Set New Java Path</Button>}
                     {loading && <Button raised outline>Processing...</Button>}  
                 </Block>

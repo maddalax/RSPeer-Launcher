@@ -17,12 +17,12 @@ export class FileService implements IFileService {
         await fs.ensureDir(folder);
         return folder;
     }
-    
+
     async getDatabasePath(): Promise<string> {
         const folder = await this.getRsPeerFolder();
         const data = path.join(folder, 'data');
         await fs.ensureDir(data);
-        return path.join(data,'rspeer.db');
+        return path.join(data, 'rspeer.db');
     }
 
     async getHiddenRsPeerFolder(): Promise<string> {
@@ -40,9 +40,12 @@ export class FileService implements IFileService {
         return os.userInfo().username;
     }
 
-    async getJavaPath(): Promise<string> {
+    async getJavaPath(): Promise<string | null> {
         const botData = await this.getBotDataFolder();
-        const javaFolderName = this.getJavaFolderName();
+        const javaFolderName = await this.getJavaFolderName();
+        if(!javaFolderName) {
+            return null;
+        }
         const os = OperatingSystems.current();
         return os === OperatingSystem.MacOSX
             ? path.join(botData, javaFolderName, 'Contents', 'Home')
@@ -53,28 +56,57 @@ export class FileService implements IFileService {
         return await unzip(path, dest, onData);
     }
 
-    getJavaFolderName(): string {
+    async getJavaFolderName(): Promise<string> {
+        const botData = await this.getBotDataFolder();
+        const files = await fs.readdir(botData);
+        const javaPath = files.find((s : string) => {
+            if(s.endsWith('.zip') || s.endsWith('.tar.gz') || s.startsWith('.')) {
+                return false;
+            }
+            return s.startsWith('jdk') || s.endsWith('jre');
+        });
+        return javaPath;
+    }
+
+    getJavaDownloadPath(version: number): { host: string, path: string } {
+        const result = {host: 'github.com', path: ''};
         const os = OperatingSystems.current();
         switch (os) {
             case OperatingSystem.Linux:
-                return "jre-8-linux64";
+                result.path = version == 11
+                    ? `/AdoptOpenJDK/openjdk11-binaries/releases/download/jdk-11.0.3%2B7/OpenJDK11U-jre_x64_linux_hotspot_11.0.3_7.tar.gz`
+                    : `/AdoptOpenJDK/openjdk8-binaries/releases/download/jdk8u212-b04/OpenJDK8U-jre_x64_linux_hotspot_8u212b04.tar.gz`;
+                return result;
             case OperatingSystem.MacOSX:
-                return "jre-8-mac64";
+                result.path = version == 11
+                    ? `/AdoptOpenJDK/openjdk11-binaries/releases/download/jdk-11.0.3%2B7/OpenJDK11U-jre_x64_mac_hotspot_11.0.3_7.tar.gz`
+                    : `/AdoptOpenJDK/openjdk8-binaries/releases/download/jdk8u212-b04/OpenJDK8U-jre_x64_mac_hotspot_8u212b04.tar.gz`;
+                return result;
             case OperatingSystem.Windows32:
-                return "jre-8-win32";
             // use 32 bit java for 64 os because it uses less ram.
             case OperatingSystem.Windows64:
-                return "jre-8-win32";
+                result.path = version == 11
+                    ? `/AdoptOpenJDK/openjdk11-binaries/releases/download/jdk-11.0.3%2B7/OpenJDK11U-jre_x86-32_windows_hotspot_11.0.3_7.zip`
+                    : `/AdoptOpenJDK/openjdk8-binaries/releases/download/jdk8u212-b04/OpenJDK8U-jre_x86-32_windows_hotspot_8u212b04.zip`;
+                return result;
         }
         throw new Error("Operating system not specified.");
     }
 
-    async exists(path: string): Promise<boolean> {
-        return await fs.pathExists(path);
+    async exists(path: string | null): Promise<boolean> {
+        return path && await fs.pathExists(path);
+    }
+    
+    async getSize(path : string | null) : Promise<number> {
+        if(!path || !this.exists(path)) {
+            return -1;
+        }
+        const stat = await fs.lstat(path);
+        return stat.size;
     }
 
-    async delete(path : string) : Promise<boolean> {
-        return await fs.remove(path);
+    async delete(path: string | null): Promise<boolean> {
+        return path && await fs.remove(path);
     }
 
     async getBotDataFolder(): Promise<string> {
@@ -82,5 +114,10 @@ export class FileService implements IFileService {
         const data = path.join(rspeerFolder, 'bot_data');
         await fs.ensureDir(data);
         return data;
+    }
+
+    async inBotDataFolder(path: string): Promise<boolean> {
+        const folder = await this.getBotDataFolder();
+        return folder.includes(path);
     }
 }

@@ -23,8 +23,11 @@ import './css/app.css';
 import {getService} from "./Bottle";
 import {WebsocketService} from "./services/WebsocketService";
 import {DatabaseService} from "./services/DatabaseService";
+import {isDev} from "./Config";
 
-Sentry.init({dsn: "https://3fd4667c24934831a4703675d6069aa5@sentry.io/1490834"});
+if(!isDev()) {
+    Sentry.init({dsn: "https://3fd4667c24934831a4703675d6069aa5@sentry.io/1490834"});
+}
 
 // Init Framework7-React plugin
 Framework7.use(Framework7React);
