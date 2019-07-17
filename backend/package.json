@@ -7,6 +7,7 @@
   "scripts": {
     "start": "electron .",
     "start:dev": "cross-env NODE_ENV=development electron .",
+    "start:staging": "cross-env NODE_ENV=staging electron .",
     "build-sqlite3": "electron-rebuild -w sqlite3 -p"
   },
   "author": {
