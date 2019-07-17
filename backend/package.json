@@ -6,7 +6,7 @@
   "homepage": "https://rspeer.org",
   "scripts": {
     "start": "electron .",
-    "start:dev" : "cross-env NODE_ENV=development electron .",
+    "start:dev": "cross-env NODE_ENV=development electron .",
     "build-sqlite3": "electron-rebuild -w sqlite3 -p"
   },
   "author": {
@@ -16,7 +16,7 @@
   },
   "devDependencies": {
     "cross-env": "^5.2.0",
-    "electron": "5.0.5",
+    "electron": "5.0.7",
     "electron-rebuild": "^1.8.5"
   },
   "build": {
@@ -25,6 +25,7 @@
     "files": [
       "package.json",
       "main.js",
+      "env.js",
       "preload.js",
       "renderer.js",
       "public/*"

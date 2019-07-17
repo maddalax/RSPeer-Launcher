@@ -14,7 +14,10 @@ if (isProd) {
 
 process.on('uncaughtException', function (error) {
     isProd && Sentry.captureException(error);
-    dialog.showErrorBox('An uncaught error has occured. Please restart the launcher.', error.toString());
+    console.error(error);
+    if(isProd) {
+        dialog.showErrorBox('An uncaught error has occured. Please restart the launcher.', error.toString());
+    }
 });
 
 // Keep a global reference of the window object, if you don't, the window will
