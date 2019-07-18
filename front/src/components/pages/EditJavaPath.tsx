@@ -4,24 +4,34 @@ import {useState} from "react";
 import {getService} from "../../Bottle";
 import {DatabaseService} from "../../services/DatabaseService";
 import {FileService} from "../../services/FileService";
+import {EventBus} from "../../event/EventBus";
+const path = require('path');
 
 type Props = {
-    path : string
+    javaPath : string
     open : boolean
     onFinish : (cleared : boolean) => any
 }
 
-export default ({path, open, onFinish} : Props) => {
+export default ({javaPath, open, onFinish} : Props) => {
     
     const [loading, setLoading] = useState(false);
     
     async function clearJavaPath() {
-        console.log('clearing.');
-        setLoading(true);
-        const db = getService<DatabaseService>('Database');
-        await db.setConfig('javaPath', null);
-        const file = getService<FileService>('FileService');
-        await file.delete(await file.getJavaPath());
+        try {
+            setLoading(true);
+            const db = getService<DatabaseService>('Database');
+            await db.setConfig('javaPath', null);
+            const file = getService<FileService>('FileService');
+            const botDataFolder = await file.getBotDataFolder();
+            const javaFolderName = await file.getJavaFolderName();
+            if(javaFolderName) {
+                await file.delete(path.join(botDataFolder, javaFolderName));
+            }
+            await file.delete(path.join(botDataFolder, '__MACOSX'))
+        } catch (e) {
+            EventBus.getInstance().dispatch('on_error', `Failed to delete java path, reason: ${e.toString()}.`);
+        }
         setTimeout(() => {
             setLoading(false);
             onFinish(true);
@@ -41,7 +51,7 @@ export default ({path, open, onFinish} : Props) => {
                 <Block>
                     <p>You can clear and set a new Java path for the launcher to use. To do so, click the button below. Once you
                         clear your Java path, you will have the option of downloading the bundled java path or selecting your own.</p>
-                    <p>Current path: <strong>{path}</strong></p>
+                    <p>Current path: <strong>{javaPath}</strong></p>
                     {!loading && <Button raised outline onClick={clearJavaPath}>Set New Java Path</Button>}
                     {loading && <Button raised outline>Processing...</Button>}  
                 </Block>

@@ -1,7 +1,7 @@
 export interface IFileService {
     getRsPeerFolder() : Promise<string>;
-    getJavaPath() : Promise<string>;
-    getJavaFolderName() : string;
+    getJavaPath() : Promise<string | null>;
+    getJavaFolderName() : Promise<string>;
     getBotDataFolder() : Promise<string>;
     getHomeDirectory() : string;
     getSystemUsername() : string;
