@@ -39,8 +39,8 @@ function createWindow() {
         title: 'RSPeer Launcher',
         vibrancy: 'dark',
         darkTheme: true,
-        width: 800,
-        height: 768,
+        width: 863,
+        height: 661,
         show: false,
         icon: path.join(__dirname, 'public', 'tray@2x.png'),
         webPreferences: {

@@ -21,15 +21,14 @@ export default ({javaPath, open, onFinish} : Props) => {
         try {
             setLoading(true);
             const db = getService<DatabaseService>('Database');
-            const javaPath = await db.getConfig('javaPath');
             await db.setConfig('javaPath', null);
             const file = getService<FileService>('FileService');
             const botDataFolder = await file.getBotDataFolder();
-            if (file.inBotDataFolder(javaPath)) {
-                const root = path.join(javaPath, '../', '../');
-                await file.delete(root);
-                await file.delete(path.join(botDataFolder, '__MACOSX'))
+            const javaFolderName = await file.getJavaFolderName();
+            if(javaFolderName) {
+                await file.delete(path.join(botDataFolder, javaFolderName));
             }
+            await file.delete(path.join(botDataFolder, '__MACOSX'))
         } catch (e) {
             EventBus.getInstance().dispatch('on_error', `Failed to delete java path, reason: ${e.toString()}.`);
         }

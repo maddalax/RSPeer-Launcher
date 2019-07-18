@@ -106,7 +106,6 @@ export class FileService implements IFileService {
     }
 
     async delete(path: string | null): Promise<boolean> {
-        console.log('attempting to delete', path);
         return path && await fs.remove(path);
     }
 
@@ -119,6 +118,6 @@ export class FileService implements IFileService {
 
     async inBotDataFolder(path: string): Promise<boolean> {
         const folder = await this.getBotDataFolder();
-        return folder.includes(path);
+        return path.includes(folder);
     }
 }
