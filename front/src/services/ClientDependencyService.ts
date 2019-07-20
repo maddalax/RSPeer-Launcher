@@ -20,11 +20,12 @@ export class ClientDependencyService {
         }
         const jar = await this.getLatestJarPath();
         const folder = await this.file.getRsPeerFolder();
-        try {
-            await fs.copy(jar, path.join(folder, 'rspeer.jar'));
-        } catch (err) {
-            console.error('Failed to save jar for SDK in ' + folder + '.', err);
-        }
+        await fs.copy(jar, path.join(folder, 'rspeer.jar'));
+    }
+    
+    async hasApiJar() {
+        const folder = await this.file.getRsPeerFolder();
+        return this.file.exists(path.join(folder, 'rspeer.jar'));
     }
     
     async getLatestJarPath() {

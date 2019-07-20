@@ -30,7 +30,10 @@ import {EventBus} from "../../event/EventBus";
 import {Electron} from "../../util/Electron";
 import {formatDate, jsonClone} from "../../util/Util";
 import {isDev, isStaging, LauncherVersion} from "../../Config";
+import {ClientDependencyService} from "../../services/ClientDependencyService";
+import {FileService} from "../../services/FileService";
 const {shell} = Electron.require('electron');
+const path = Electron.require('path');
 
 type State = {
     user: any,
@@ -56,8 +59,11 @@ type State = {
 
 export default class HomePage extends React.Component<any, State> {
 
+    private clientCheckInterval : any;
+    
     constructor(props: any) {
         super(props);
+        this.clientCheckInterval = null;
         this.state = {
             user: null,
             javaPath: '',
@@ -103,12 +109,16 @@ export default class HomePage extends React.Component<any, State> {
             router.get().navigate('/login/');
             return;
         }
+        this.startLatestJarCheck();
         this.setState({user, checkingJavaDependency : true, checkingClientDependency : true, initializeMessage : ''});
     }
     
     componentWillUnmount(): void {
         EventBus.getInstance().unregister("on_error", this.onErrorRecieved);
         EventBus.getInstance().unregister("on_log", this.onLogRecieved);
+        if(this.clientCheckInterval) {
+            clearInterval(this.clientCheckInterval);
+        }
     }
     
     async componentDidUpdate(prevProps: Readonly<any>, prevState: Readonly<State>, snapshot?: any) {
@@ -216,11 +226,41 @@ export default class HomePage extends React.Component<any, State> {
         shell.openExternal('https://app.rspeer.org/#/bot/management' + qs);
     };
 
+    startLatestJarCheck = () => {
+        const client = getService<ClientDependencyService>('ClientDependencyService');
+        this.clientCheckInterval = setInterval(async () => {
+            if(this.state.checkingClientDependency) {
+                return;
+            }
+            const hasLatest = await client.hasLatestJar();
+            const hasApiJar = await client.hasApiJar();
+            if(hasLatest && !hasApiJar) {
+                try {
+                    await client.saveApiJar();
+                } catch (e) {
+                    this.pushError(e, false);
+                }
+            }
+            if(hasLatest) {
+                return;
+            }
+            this.setState({checkingClientDependency : true});
+        }, 1000);
+    };
+    
     getEnviromentTitle() {
         if(isDev()) return 'Development';    
         if(isStaging()) return 'Staging';
         return '';
     }
+    
+    logout = async () => {
+        const file = getService<FileService>('FileService');
+        const rspeer = await file.getRsPeerFolder();
+        await file.delete(path.join(rspeer, 'misc_new'));
+        await file.delete(path.join(rspeer, 'rspeer_me'));
+        window.location.reload();
+    };
     
     render() {
         return <Page>
@@ -236,9 +276,7 @@ export default class HomePage extends React.Component<any, State> {
             </Toolbar>
             {this.state.user &&
                 <List>
-                    <ListItem title={`Welcome ${this.state.user.username}.`} view={"#"} after={"Log Out"} onClick={() => {
-                        console.log('yo');
-                    }}>
+                    <ListItem title={`Welcome ${this.state.user.username}.`} view={"#"} after={"Log Out"} onClick={this.logout}>
                     </ListItem>
                 </List>
          }

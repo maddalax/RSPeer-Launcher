@@ -4,6 +4,7 @@ import {getService} from "../../Bottle";
 import {ClientDependencyService} from "../../services/ClientDependencyService";
 import {Icon, List, ListItem} from "framework7-react";
 import {FileService} from "../../services/FileService";
+import {EventBus} from "../../event/EventBus";
 
 export type CheckClientProps = {
     onFinish : (path : string) => any
@@ -21,7 +22,7 @@ export function CheckClient({onFinish, isQuickLaunch} : CheckClientProps) {
     async function restartDownload() {
         setDownloading(true);
         setError('');
-        setProgress({current : '', size : ''})
+        setProgress({current : '', size : ''});
         await fileService.delete(await service.getLatestJarPath());
         await downloadLatest(true);
     }
@@ -46,7 +47,11 @@ export function CheckClient({onFinish, isQuickLaunch} : CheckClientProps) {
            return;
         }
 
-        await service.saveApiJar();
+        try {
+            await service.saveApiJar();
+        } catch (e) {
+            EventBus.getInstance().dispatch('on_error', e.toString());
+        }
         onFinish(await service.getLatestJarPath());
     }
     
