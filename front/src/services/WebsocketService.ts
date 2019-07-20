@@ -7,20 +7,8 @@ import {GetLogsRequest} from "../models/WebsocketMessage";
 const axios = Electron.require('axios');
 const io = Electron.require('socket.io-client');
 const os = Electron.require('os');
-
-/*
 const nsq = Electron.require('nsqjs');
 
-const reader = new nsq.Reader('test', 'launcher', {
-    lookupdHTTPAddresses: 'nsq.rspeer.org:4161'
-});
-
-reader.connect();
-
-reader.on('message', (message : any) => {
-    console.log('Received message [%s]: %s', message.body.toString());
-});
- */
 
 export interface WebsocketOptions {
     onConnect? : () => any
@@ -28,6 +16,66 @@ export interface WebsocketOptions {
     onMessage? : (message : any) => any
     onError? : (err : any) => any,
     onReconnect? : (attempt : number) => any
+}
+
+export class NsqService {
+
+    private apiService: ApiService;
+    private readonly identifier : string;
+    private readonly writer : any;
+    private topic : string;
+
+    constructor(apiService: ApiService) {
+        this.apiService = apiService;
+        this.topic = '';
+        this.identifier = `launcher_${guid()}`;
+        this.writer = new nsq.Writer('nsq.rspeer.org', 4150);
+    }
+    
+    private getTopic = async () => {
+        const config = await this.apiService.get("user/getClientConfig");
+        if(config.error || !config.channel) {
+            throw new Error(`Failed to get topic. ${config.error}.`);
+        }
+        return config.channel;
+    };
+    
+    public async dispatch(payload : any) {
+       console.log('dispatching', this.topic, payload);
+       return new Promise((res, rej) => {
+           this.writer.publish(this.topic, payload, (err : any) => {
+               if (err) { 
+                   rej(err);
+                   return;
+               }
+               res();
+           }) 
+       });
+    }
+    
+    public connect = async (options : WebsocketOptions) => {
+        this.topic = await this.getTopic();
+        this.writer.connect();
+        const reader = new nsq.Reader(this.topic, this.identifier, {
+            lookupdHTTPAddresses: 'nsq.rspeer.org:4161'
+        });
+        reader.connect();
+        reader.on('message', (message : any) => {
+            let parsed : any = {};
+            try {
+                parsed = JSON.parse(message.body.toString());
+            } catch (ignored) {
+                return;
+            } finally {
+                message.finish();
+            }
+            if(!parsed.type) {
+                return;
+            }
+            options.onMessage && options.onMessage(parsed);
+        });
+    };
+    
 }
 
 export class WebsocketService {

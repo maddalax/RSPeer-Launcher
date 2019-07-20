@@ -15,6 +15,7 @@ export interface RemoteQuickStartLaunch {
 
 export interface RemoteSimpleLaunch {
     count : number,
+    identifier? : string,
     jvmArgs : string,
     proxy : Proxy,
     session : string,

@@ -14,10 +14,12 @@ import * as React from "react";
 import {useEffect, useState} from "react";
 import {getService} from "../../Bottle";
 import {ClientLaunchConfig, ClientLaunchService} from "../../services/ClientLaunchService";
-import {Client, Proxy, RemoteQuickStartLaunch, RemoteSimpleLaunch} from "../../models/QuickLaunch";
-import {Launcher, RemoteLauncherService} from "../../services/RemoteLauncherService";
-import {WebsocketService} from "../../services/WebsocketService";
+import {Client, Proxy, RemoteQuickStartLaunch} from "../../models/QuickLaunch";
+import {NsqService} from "../../services/WebsocketService";
 import {AuthorizationService} from "../../services/AuthorizationService";
+import {EventBus} from "../../event/EventBus";
+import {LauncherInfoService} from "../../services/LauncherInfoService";
+import {Launcher} from "../../models/Launcher";
 
 type Props = {
     path: string
@@ -29,9 +31,9 @@ type Props = {
 }
 
 const launchService = getService<ClientLaunchService>('ClientLaunchService');
-const remoteLauncher = getService<RemoteLauncherService>('RemoteLauncherService');
 const authService = getService<AuthorizationService>('AuthorizationService');
-
+const launcherInfoService = getService<LauncherInfoService>('LauncherInfoService');
+const nsq = getService<NsqService>('NsqService');
 
 export default ({open, onFinish, onError, onLog, onBotPanelOpen}: Props) => {
 
@@ -42,8 +44,8 @@ export default ({open, onFinish, onError, onLog, onBotPanelOpen}: Props) => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
-    const [launchers, setLaunchers] = useState({} as Launcher);
-    const [selectedLauncher, setSelectedLauncher] = useState('');
+    const [launchers, setLaunchers] = useState([] as Launcher[]);
+    const [selectedLauncher, setSelectedLauncher] = useState(null);
 
     const buildQuickLaunch = () => {
         const clients: Client[] = [];
@@ -75,10 +77,9 @@ export default ({open, onFinish, onError, onLog, onBotPanelOpen}: Props) => {
             },
             onLog
         };
-        const selected = selectedLauncher || Object.keys(launchers)[0];
-        const launcher = launchers[selected];
+        const launcher = selectedLauncher != null ? launchers.find(w => w.identifier === selectedLauncher) : launchers[0];
         if(!launcher) {
-            return setError(`Unable to find selected launcher. ${selected}.`);
+            return setError(`Unable to find selected launcher. ${launcher}.`);
         }
         if(launcher.isMe) {
             launchService.launch(config);
@@ -95,7 +96,7 @@ export default ({open, onFinish, onError, onLog, onBotPanelOpen}: Props) => {
                 sleep : 10
             };
             try {
-                await remoteLauncher.send(selectedLauncher || Object.keys(launchers)[0], simple);
+                await nsq.dispatch({type : 'start:client', identifier : launcher.identifier, payload : simple});
             } catch(ex) {
                 onError(ex);
             }
@@ -107,33 +108,28 @@ export default ({open, onFinish, onError, onLog, onBotPanelOpen}: Props) => {
         }
     };
 
-    async function loadLaunchers() {
-        const ws = getService<WebsocketService>('WebsocketService');
-        let launchers = await remoteLauncher.getLaunchers();
-        const us = Object.keys(launchers).find((key: string) => {
-            const launcher = launchers[key];
-            if (launcher.identifier === ws.getIdentifier()) {
-                return key;
-            }
-            return null;
+    async function discoverLaunchers() {
+        await nsq.dispatch({
+            type : 'launcher:discover'
         });
-        const result: any = {};
-        if (us) {
-            launchers[us].isMe = true;
-            result[us] = launchers[us];
-        }
-        Object.keys(launchers).filter(s => s !== us).forEach(l => {
-            result[l] = launchers[l];
-        });
-        
-        setLaunchers(result);
     }
 
     useEffect(() => {
         if (!open) {
             return;
         }
-        loadLaunchers();
+        setLaunchers([]);
+        EventBus.getInstance().register('launcher_discovered', (launcher : Launcher) => {
+            launcher.isMe = launcherInfoService.isMe(launcher);
+            setLaunchers(prev => {
+                if(prev.find(w => w.identifier === launcher.identifier)) {
+                    return prev;
+                }
+                prev = prev.concat([launcher]);
+                return prev;
+            });
+        });
+        discoverLaunchers();
     }, [open]);
 
     return <Popup id="startClientSimple" tabletFullscreen={true} opened={open} onPopupClosed={() => {
@@ -195,18 +191,15 @@ export default ({open, onFinish, onError, onLog, onBotPanelOpen}: Props) => {
                     <ListInput
                         label="Computer"
                         type="select"
-                        value={selectedLauncher || Object.keys(launchers)[0]}
+                        value={selectedLauncher || launchers[0]}
                         placeholder="Loading..."
-                        onChange={(e) => {
-                           setSelectedLauncher(e.target.value);
-                        }}
+                        onChange={(e) => setSelectedLauncher(e.target.value)}
                         info={"Which computer would you like to run this client on? You may select any of your computers that are running the RSPeer launcher."}
 
                     >
-                        {Object.keys(launchers).map((key: string) => {
-                            const launcher = launchers[key];
+                        {launchers.sort(w => w.isMe ? 1 : 0).map((launcher: Launcher) => {
                             const title = launcher.isMe ? `${launcher.host} (This Launcher) (${launcher.ip})` : `${launcher.host} (${launcher.ip})`;
-                            return <option value={key}>{title}</option>
+                            return <option value={launcher.identifier}>{title}</option>
                         })}
                     </ListInput>
                     <Block>

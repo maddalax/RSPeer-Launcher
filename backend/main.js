@@ -148,7 +148,8 @@ function createLoadingWindow() {
     }, 1000)
 }
 
-const isSingleton = app.requestSingleInstanceLock();
+//const isSingleton = app.requestSingleInstanceLock();
+const isSingleton = true;
 
 if (!isSingleton) {
     app.quit();
