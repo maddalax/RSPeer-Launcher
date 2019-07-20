@@ -151,6 +151,7 @@ export default ({open, onFinish, onError, onLog, onBotPanelOpen}: Props) => {
                         type="text"
                         value={ip}
                         onChange={(e) => setIp(e.target.value)}
+                        onInputClear={() => setIp('')}
                         label={"Proxy Ip Address (Optional)"}
                         placeholder="127.0.0.1"
                         info={"Input this if you would like to run your client with a proxy."}
@@ -160,6 +161,7 @@ export default ({open, onFinish, onError, onLog, onBotPanelOpen}: Props) => {
                         type="number"
                         value={port}
                         onChange={(e) => setPort(e.target.value)}
+                        onInputClear={() => setPort('')}
                         label={"Proxy Port (Optional)"}
                         placeholder={"4689"}
                         info={"The port that your proxy uses."}
@@ -169,6 +171,7 @@ export default ({open, onFinish, onError, onLog, onBotPanelOpen}: Props) => {
                         type="text"
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
+                        onInputClear={() => setUsername('')}
                         label={"Proxy Username (Optional)"}
                         placeholder="username"
                         info={"If your proxy requires authorization, enter that here."}
@@ -178,6 +181,7 @@ export default ({open, onFinish, onError, onLog, onBotPanelOpen}: Props) => {
                         type="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
+                        onInputClear={() => setPassword('')}
                         label={"Proxy Password (Optional)"}
                         placeholder="password"
                         info={"If your proxy requires authorization, enter that here."}
@@ -187,6 +191,7 @@ export default ({open, onFinish, onError, onLog, onBotPanelOpen}: Props) => {
                         type="number"
                         label={"Number Of Clients To Start"}
                         min={1}
+                        onInputClear={() => setCount(1)}
                         value={count}
                         onChange={(e: any) => setCount(e.target.value)}
                         info={"Note: All clients opened from this will use the same proxy if you specified it above."}
@@ -195,6 +200,7 @@ export default ({open, onFinish, onError, onLog, onBotPanelOpen}: Props) => {
                     <ListInput
                         label="Computer"
                         type="select"
+                        onInputClear={() => setSelectedLauncher(Object.keys(launchers)[0])}
                         value={selectedLauncher || Object.keys(launchers)[0]}
                         placeholder="Loading..."
                         onChange={(e) => {
