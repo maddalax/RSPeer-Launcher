@@ -4,16 +4,19 @@ import {AuthorizationService} from "./AuthorizationService";
 import {Electron} from "../util/Electron";
 import {shutdownApp} from "../index";
 import {GetLogsRequest} from "../models/WebsocketMessage";
+import {WebsocketService} from "./WebsocketService";
 const process = Electron.require('process');
 
 export class WebsocketMessageParser {
     
     private readonly launchService : ClientLaunchService;
     private readonly authService : AuthorizationService;
+    private readonly websocket : WebsocketService;
     
-    constructor(launchService: ClientLaunchService, authService : AuthorizationService) {
+    constructor(launchService: ClientLaunchService, authService : AuthorizationService, websocket : WebsocketService) {
         this.launchService = launchService;
         this.authService = authService;
+        this.websocket = websocket;
     }
 
     public async onMessage(message : any, onMessage : (message : any) => any, onError : (error : any, sentry? : boolean) => any) {
@@ -31,7 +34,7 @@ export class WebsocketMessageParser {
             }, 2000);
         }
         if(message.type === 'launcher:getLogs') {
-            
+            return await this.dispatchLogs(message);
         }
         if(message.type === 'start:client') {
             return await this.startClient(message, onMessage, onError);
@@ -78,9 +81,10 @@ export class WebsocketMessageParser {
         await this.launchService.launch(config);
     }
     
-    private async getLogs(message : GetLogsRequest) : Promise<any[]> {
-        
-        return []
+    private async dispatchLogs(message : GetLogsRequest) {
+        const socket = this.websocket.getSocket();
+        const key = `launcher_get_logs_${message.message_return_id}`;
+        socket.emit(key, {count : 1, rows : [{message : '[LAUNCHER MESSAGE] This is currently being re-worked and is not available, sorry for the inconvenience!'}]});
     };
     
 }

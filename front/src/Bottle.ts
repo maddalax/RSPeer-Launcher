@@ -23,7 +23,7 @@ bottle.service('ExecService', ExecService, 'FileService', 'Database');
 bottle.service('QuickLaunchArgService', QuickLaunchArgService, 'FileService');
 bottle.service('ClientLaunchService', ClientLaunchService, 'ClientDependencyService', 'ExecService');
 bottle.service('WebsocketService', WebsocketService, 'ApiService');
-bottle.service('WebsocketMessageParser', WebsocketMessageParser, 'ClientLaunchService', 'AuthorizationService');
+bottle.service('WebsocketMessageParser', WebsocketMessageParser, 'ClientLaunchService', 'AuthorizationService', 'WebsocketService');
 bottle.service('RemoteLauncherService', RemoteLauncherService, 'ApiService');
 
 export function getService<T>(name : string): T {
