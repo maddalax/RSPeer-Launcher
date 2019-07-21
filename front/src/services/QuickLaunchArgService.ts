@@ -70,11 +70,17 @@ export class QuickLaunchArgService {
             if(!s) {
                 return false;
             }
+            if(s.endsWith('.json') || s.endsWith('.txt') || s.includes('http')) {
+                return true;
+            }
+            if(s.includes('/private/var/folders/')) {
+                return false;
+            }
             if(s.endsWith('rspeer-launcher')) {
                 return false;
             }
-            if(s.endsWith('.json') || s.endsWith('.txt') || s.includes('http')) {
-                return true;
+            if(s.includes('RSPeer-Launcher') || s.includes('Contents/MacOS/RSPeer Launcher')) {
+                return false;
             }
             return !s.includes('electron') && s !== '.' && !s.startsWith("-") && !s.endsWith('.exe');
         });
