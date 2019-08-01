@@ -245,7 +245,7 @@ export default class HomePage extends React.Component<any, State> {
                 return;
             }
             this.setState({checkingClientDependency : true});
-        }, 1000);
+        }, 5000);
     };
     
     getEnviromentTitle() {

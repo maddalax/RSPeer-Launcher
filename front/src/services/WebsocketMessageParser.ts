@@ -28,8 +28,8 @@ export class WebsocketMessageParser {
         }
         if(message.type === 'launcher:kill') {
             onError('Received kill command from Bot Management Panel, stopping launcher.', false);
-            setTimeout(() => {
-                shutdownApp();
+            await shutdownApp();
+            setTimeout(async () => {
                 process.exit(1);
             }, 2000);
         }
@@ -82,9 +82,8 @@ export class WebsocketMessageParser {
     }
     
     private async dispatchLogs(message : GetLogsRequest) {
-        const socket = this.websocket.getSocket();
-        const key = `launcher_get_logs_${message.message_return_id}`;
-        socket.emit(key, {count : 1, rows : [{message : '[LAUNCHER MESSAGE] This is currently being re-worked and is not available, sorry for the inconvenience!'}]});
+        //const key = `launcher_get_logs_${message.message_return_id}`;
+        //socket.emit(key, {count : 1, rows : [{message : '[LAUNCHER MESSAGE] This is currently being re-worked and is not available, sorry for the inconvenience!'}]});
     };
     
 }

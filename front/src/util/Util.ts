@@ -1,5 +1,6 @@
 import { camelCase } from 'lodash';
-
+import { Electron } from './Electron';
+const uuidv4 = Electron.require('uuid/v4');
 
 export const sleep = (timeout : number) => {
     return new Promise(res => setTimeout(res, timeout))
@@ -20,7 +21,7 @@ export const camelizeKeys = (obj : any) : any => {
     return obj;
 };
 
-export const guid = () => Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+export const guid = () => uuidv4();
 
 export const formatDate = (value : string, includeTime : boolean = true) => {
     const date = new Date(value);

@@ -42,9 +42,9 @@ window.onbeforeunload = () => {
   shutdownApp();
 };
 
-export function shutdownApp() {
+export async function shutdownApp() {
     const service = getService<WebsocketService>('WebsocketService');
     const db = getService<DatabaseService>('Database');
-    service.disconnect();
-    db.close();
+    await service.disconnect();
+    await db.close();
 }
