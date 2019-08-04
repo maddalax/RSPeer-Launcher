@@ -190,7 +190,8 @@ export default class HomePage extends React.Component<any, State> {
         console.error(err, sentry);
         sentry && Sentry.captureException(err);
         this.setState(prev => {
-            prev.errorLogs.unshift(`${formatDate(Date.now() as any, true)} - ${err.toString()}`);
+            const error = typeof err === "object" ? JSON.stringify(err) : err.toString();
+            prev.errorLogs.unshift(`${formatDate(Date.now() as any, true)} - ${error}`);
             if (prev.errorLogs.length > 100) {
                 prev.errorLogs.splice(prev.errorLogs.length - 1, 1);
             }
@@ -200,7 +201,8 @@ export default class HomePage extends React.Component<any, State> {
 
     pushLog = (log: string) => {
         this.setState(prev => {
-            prev.logs.unshift(`${formatDate(Date.now() as any, true)} - ${log.toString()}`);
+            const formatted = typeof log === "object" ? JSON.stringify(log) : log.toString();
+            prev.logs.unshift(`${formatDate(Date.now() as any, true)} - ${formatted}`);
             if (prev.logs.length > 100) {
                 prev.logs.splice(prev.logs.length - 1, 1);
             }
