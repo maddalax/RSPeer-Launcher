@@ -1,17 +1,18 @@
 import React from 'react';
 import * as Sentry from '@sentry/browser';
 import {
-    Page,
-    Navbar,
-    NavTitle,
-    Toolbar,
     Block,
     BlockTitle,
+    Button,
+    Col,
+    Icon,
     List,
     ListItem,
+    Navbar,
+    NavTitle,
+    Page,
     Row,
-    Col,
-    Button, Icon
+    Toolbar
 } from 'framework7-react';
 import {getService} from "../../Bottle";
 import {AuthorizationService} from "../../services/AuthorizationService";
@@ -32,6 +33,9 @@ import {formatDate, jsonClone} from "../../util/Util";
 import {isDev, isStaging, LauncherVersion} from "../../Config";
 import {ClientDependencyService} from "../../services/ClientDependencyService";
 import {FileService} from "../../services/FileService";
+import {Game} from "../../models/Game";
+import {hasInuvation} from "../../models/User";
+
 const {shell} = Electron.require('electron');
 const path = Electron.require('path');
 
@@ -49,7 +53,8 @@ type State = {
     openClientAdvanced: boolean,
     clearingJavaPath: boolean,
     checkingJavaDependency: boolean
-    checkingClientDependency: boolean
+    checkingRspeerClient: boolean
+    checkingInuvationClient: boolean
     executingQuickLaunch : boolean,
     initializeMessage: string,
     failedLogin : boolean,
@@ -59,11 +64,11 @@ type State = {
 
 export default class HomePage extends React.Component<any, State> {
 
-    private clientCheckInterval : any;
+    private clientCheckIntervals : any[];
     
     constructor(props: any) {
         super(props);
-        this.clientCheckInterval = null;
+        this.clientCheckIntervals = [];
         this.state = {
             user: null,
             javaPath: '',
@@ -74,7 +79,8 @@ export default class HomePage extends React.Component<any, State> {
             initializeMessage: 'Please wait...',
             executingQuickLaunch : false,
             checkingJavaDependency: false,
-            checkingClientDependency: false,
+            checkingInuvationClient : false,
+            checkingRspeerClient : false,
             failedLogin : false,
             quickLaunch : null,
             errorLogs: [],
@@ -109,16 +115,18 @@ export default class HomePage extends React.Component<any, State> {
             router.get().navigate('/login/');
             return;
         }
-        this.startLatestJarCheck();
-        this.setState({user, checkingJavaDependency : true, checkingClientDependency : true, initializeMessage : ''});
+        const inuvation = hasInuvation(user);
+        if(inuvation) {
+            this.startLatestJarCheck(Game.Rs3);
+        }
+        this.startLatestJarCheck(Game.Osrs);
+        this.setState({user, checkingJavaDependency : true, checkingRspeerClient : true, checkingInuvationClient : inuvation, initializeMessage : ''});
     }
     
     componentWillUnmount(): void {
         EventBus.getInstance().unregister("on_error", this.onErrorRecieved);
         EventBus.getInstance().unregister("on_log", this.onLogRecieved);
-        if(this.clientCheckInterval) {
-            clearInterval(this.clientCheckInterval);
-        }
+        this.clientCheckIntervals.forEach(c => clearInterval(c));
     }
     
     async componentDidUpdate(prevProps: Readonly<any>, prevState: Readonly<State>, snapshot?: any) {
@@ -228,17 +236,20 @@ export default class HomePage extends React.Component<any, State> {
         shell.openExternal('https://app.rspeer.org/#/bot/management' + qs);
     };
 
-    startLatestJarCheck = () => {
+    startLatestJarCheck = (game : Game) => {
         const client = getService<ClientDependencyService>('ClientDependencyService');
-        this.clientCheckInterval = setInterval(async () => {
-            if(this.state.checkingClientDependency) {
+        const interval : any = setInterval(async () => {
+            if(game === Game.Osrs && this.state.checkingRspeerClient) {
                 return;
             }
-            const hasLatest = await client.hasLatestJar();
+            if(game === Game.Rs3 && this.state.checkingInuvationClient) {
+                return;
+            }
+            const hasLatest = await client.hasLatestJar(game);
             const hasApiJar = await client.hasApiJar();
             if(hasLatest && !hasApiJar) {
                 try {
-                    await client.saveApiJar();
+                    await client.saveApiJar(game);
                 } catch (e) {
                     this.pushError(e, false);
                 }
@@ -246,8 +257,13 @@ export default class HomePage extends React.Component<any, State> {
             if(hasLatest) {
                 return;
             }
-            this.setState({checkingClientDependency : true});
+            if(game === Game.Osrs) {
+                this.setState({checkingRspeerClient: true});
+            } else {
+                this.setState({checkingInuvationClient: true});
+            }
         }, 5000);
+        this.clientCheckIntervals.push(interval);
     };
     
     getEnviromentTitle() {
@@ -375,8 +391,11 @@ export default class HomePage extends React.Component<any, State> {
             {this.state.checkingJavaDependency && <CheckJava isQuickLaunch={this.state.executingQuickLaunch} onFinish={() => {
                 this.setState({checkingJavaDependency: false}, this.setConfig);
             }}/>}
-            {this.state.checkingClientDependency && <CheckClient isQuickLaunch={this.state.executingQuickLaunch} onFinish={(path: string) => {
-                this.setState({checkingClientDependency: false, clientPath: path}, this.setConfig);
+            {this.state.checkingRspeerClient && <CheckClient game={Game.Osrs} onFinish={(path: string) => {
+                this.setState({checkingRspeerClient: false, clientPath: path}, this.setConfig);
+            }}/>}
+            {this.state.checkingInuvationClient && <CheckClient game={Game.Rs3} onFinish={(path: string) => {
+                this.setState({checkingInuvationClient: false, clientPath: path}, this.setConfig);
             }}/>}
         </Page>
     }

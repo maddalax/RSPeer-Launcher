@@ -56,7 +56,8 @@ export class WebsocketMessageParser {
         };
         for(let i = 0; i < message.count; i++) {
           const client : Client = {
-              proxy : message.proxy
+              proxy : message.proxy,
+              game : message.game
           };
           result.qs.clients.push(client);  
         }

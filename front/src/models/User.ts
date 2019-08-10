@@ -18,3 +18,8 @@ export interface Group {
     name:        string;
     description: string;
 }
+
+
+export const hasInuvation = (user : User) : boolean => {
+    return user && user.groupNames.find((s: string) => s === 'Inuvation' || s === "Inuvation Maintainers") != null;
+};

@@ -62,7 +62,7 @@ export function CheckJava({onFinish, isQuickLaunch} : CheckDependenciesProps) {
         setDownloadPath(downloadPath.path);
         const split = downloadPath.path.split("/");
         const dest = path.join(botData, split[split.length - 1]);
-        await Http.download(downloadPath.host, downloadPath.path, dest, (data: any) => {
+        await Http.download(downloadPath.host, downloadPath.path, dest, false, (data: any) => {
             setDownloadSize(data);
         });
     }

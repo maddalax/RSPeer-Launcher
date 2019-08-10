@@ -69,11 +69,11 @@ export class ApiService {
         })
     }
 
-    public async download(path : string, dest : string, onData? : (data : any) => any) : Promise<void> {
+    public async download(path : string, dest : string, addAuth : boolean, onData? : (data : any) => any) : Promise<void> {
         let url = window.rspeer.apiUrl.toString();
         url = url.replace("https://", "").replace("http://", "");
         url = url.replace("/api/", "");
-        return await this.execute(() => Http.download(url, `/api/${path}`, dest, onData));
+        return await this.execute(() => Http.download(url, `/api/${path}`, dest, addAuth, onData));
     }
     
     private async execute(func : () => Promise<any>) {

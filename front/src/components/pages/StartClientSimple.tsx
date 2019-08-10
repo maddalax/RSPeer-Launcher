@@ -1,23 +1,14 @@
-import {
-    Block,
-    Button,
-    Link,
-    List,
-    ListInput,
-    Navbar,
-    NavRight,
-    Page,
-    Popup,
-    View,
-} from "framework7-react";
+import {Block, Button, Link, List, ListInput, Navbar, NavRight, Page, Popup, View,} from "framework7-react";
 import * as React from "react";
 import {useEffect, useState} from "react";
 import {getService} from "../../Bottle";
 import {ClientLaunchConfig, ClientLaunchService} from "../../services/ClientLaunchService";
-import {Client, Proxy, RemoteQuickStartLaunch, RemoteSimpleLaunch} from "../../models/QuickLaunch";
+import {Client, Proxy, RemoteQuickStartLaunch} from "../../models/QuickLaunch";
 import {Launcher, RemoteLauncherService} from "../../services/RemoteLauncherService";
 import {WebsocketService} from "../../services/WebsocketService";
 import {AuthorizationService} from "../../services/AuthorizationService";
+import {Game, GameFormatted} from "../../models/Game";
+import {hasInuvation} from "../../models/User";
 
 type Props = {
     path: string
@@ -43,13 +34,15 @@ export default ({open, onFinish, onError, onLog, onBotPanelOpen}: Props) => {
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [launchers, setLaunchers] = useState({} as Launcher);
+    const [game, setGame] = useState(Game.Osrs);
     const [selectedLauncher, setSelectedLauncher] = useState('');
+    const [inuvation, setHasInuvation] = useState(false);
 
     const buildQuickLaunch = () => {
         const clients: Client[] = [];
         for (let i = 0; i < count; i++) {
             const proxy: Proxy | null = ip && port ? {ip, port: parseInt(port), username, password} : null;
-            const client: Client = {};
+            const client: Client = {game};
             if(proxy) {
                 client.proxy = proxy;
             }
@@ -65,6 +58,7 @@ export default ({open, onFinish, onError, onLog, onBotPanelOpen}: Props) => {
         const config: ClientLaunchConfig = {
             quickLaunch: qs,
             count : qs.clients.length,
+            game : game,
             onError: (err) => {
                 setError(err.toString());
                 onError(err)
@@ -90,6 +84,7 @@ export default ({open, onFinish, onError, onLog, onBotPanelOpen}: Props) => {
             }
             const simple : RemoteQuickStartLaunch = {
                 qs : config.quickLaunch,
+                game : game,
                 session : session,
                 type : 'start:client',
                 sleep : 10
@@ -128,12 +123,18 @@ export default ({open, onFinish, onError, onLog, onBotPanelOpen}: Props) => {
         
         setLaunchers(result);
     }
+    
+    async function setInuvation() {
+        const user = await authService.getUser();
+        user && setHasInuvation(hasInuvation(user))
+    }
 
     useEffect(() => {
         if (!open) {
             return;
         }
         loadLaunchers();
+        setInuvation();
     }, [open]);
 
     return <Popup id="startClientSimple" tabletFullscreen={true} opened={open} onPopupClosed={() => {
@@ -215,6 +216,21 @@ export default ({open, onFinish, onError, onLog, onBotPanelOpen}: Props) => {
                             return <option value={key}>{title}</option>
                         })}
                     </ListInput>
+                    {inuvation && <ListInput
+                        label="Game"
+                        type="select"
+                        onInputClear={() => setGame(Game.Osrs)}
+                        value={game || Game.Osrs}
+                        placeholder="Loading..."
+                        onChange={(e) => {
+                            setGame(e.target.value);
+                        }}
+                        info={"Choose which game you would like to open."}
+
+                    >
+                        <option value={Game.Osrs}>{GameFormatted(Game.Osrs)}</option>
+                        <option value={Game.Rs3}>{GameFormatted(Game.Rs3)}</option>
+                    </ListInput>}
                     <Block>
                         {!loading && <Button outline onClick={launch}>Launch {count} Client(s)</Button>}
                         {loading && <Button outline>Launching... Please Wait</Button>}

@@ -1,6 +1,8 @@
 import {FileService} from "./FileService";
 import {ApiService} from "./ApiService";
 import {Electron} from "../util/Electron";
+import {Game} from "../models/Game";
+
 const path = Electron.require('path');
 const fs = Electron.require('fs-extra');
 
@@ -14,8 +16,8 @@ export class ClientDependencyService {
         this.api = api;
     }
     
-    async saveApiJar() {
-        if(!await this.hasLatestJar()) {
+    async saveApiJar(game : Game) {
+        if(!await this.hasLatestJar(game)) {
             throw new Error('Can not save API jar, latest jar not downloaded.');
         }
         const jar = await this.getLatestJarPath();
@@ -28,16 +30,15 @@ export class ClientDependencyService {
         return this.file.exists(path.join(folder, 'rspeer.jar'));
     }
     
-    async getLatestJarPath() {
-        const folder = await this.file.getHiddenRsPeerFolder();
-        const latest = await this.api.get('bot/currentVersion');
+    async getLatestJarPath(game : Game = Game.Osrs) {
+        const folder = await this.file.getHiddenRsPeerFolder(game);
+        const latest = await this.api.get('bot/currentVersion?game=' + game);
         const version = latest.version.toFixed(2);
-        const dest = path.join(folder, `${version}.jar`);
-        return dest;
+        return path.join(folder, `${version}.jar`);
     }
     
-    async hasLatestJar() {
-        const path = await this.getLatestJarPath();
+    async hasLatestJar(game : Game) {
+        const path = await this.getLatestJarPath(game);
         const exists = await this.file.exists(path);
         if(!exists) {
             return false;
@@ -46,10 +47,10 @@ export class ClientDependencyService {
         return stat.size > 1000;
     }
     
-    async downloadLatest(onData : (data : any) => any) {
-        if(await this.hasLatestJar()) {
+    async downloadLatest(game : Game, onData : (data : any) => any) {
+        if(await this.hasLatestJar(game)) {
             return;
         }
-        await this.api.download('bot/currentJar', await this.getLatestJarPath(), onData)
+        await this.api.download('bot/currentJar?game=' + game, await this.getLatestJarPath(game), true, onData)
     }
 }

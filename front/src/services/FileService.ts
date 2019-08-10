@@ -2,6 +2,7 @@ import {IFileService} from "./base/IFileService";
 import {Electron} from "../util/Electron";
 import {unzip} from "../util/Unzip";
 import {OperatingSystem, OperatingSystems} from "../util/OperatingSystem";
+import {Game} from "../models/Game";
 
 const path = Electron.require('path');
 const os = Electron.require('os');
@@ -25,9 +26,9 @@ export class FileService implements IFileService {
         return path.join(data, 'rspeer.db');
     }
 
-    async getHiddenRsPeerFolder(): Promise<string> {
+    async getHiddenRsPeerFolder(game : Game): Promise<string> {
         const home = this.getHomeDirectory();
-        const folder = path.join(home, '.rspeer');
+        const folder = path.join(home, game === Game.Osrs ? '.rspeer' : '.rspeer_inuvation');
         await fs.ensureDir(folder);
         return folder;
     }
@@ -114,10 +115,5 @@ export class FileService implements IFileService {
         const data = path.join(rspeerFolder, 'bot_data');
         await fs.ensureDir(data);
         return data;
-    }
-
-    async inBotDataFolder(path: string): Promise<boolean> {
-        const folder = await this.getBotDataFolder();
-        return path.includes(folder);
     }
 }

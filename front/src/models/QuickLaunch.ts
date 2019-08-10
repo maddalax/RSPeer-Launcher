@@ -1,3 +1,5 @@
+import {Game} from "./Game";
+
 export interface QuickLaunch {
     rspeerEmail?:      string;
     rspeerPassword?:   string;
@@ -7,6 +9,7 @@ export interface QuickLaunch {
 
 export interface RemoteQuickStartLaunch {
     jvmArgs? : string,
+    game? : Game,
     qs : {clients : Client[]},
     session : string,
     sleep? : number,
@@ -15,6 +18,7 @@ export interface RemoteQuickStartLaunch {
 
 export interface RemoteSimpleLaunch {
     count : number,
+    game? : Game,
     jvmArgs : string,
     proxy : Proxy,
     session : string,
@@ -34,8 +38,9 @@ export interface Client {
     proxyIp?:      string;
     proxyUser?:    string;
     proxyPass?:    string;
+    game? : Game;
     config?:       Config;
-    proxy? : Proxy | null,
+    proxy? : Proxy | null;
     script? : Script | null
 }
 

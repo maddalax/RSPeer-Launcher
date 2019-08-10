@@ -29,7 +29,7 @@ export class AuthorizationService implements IAuthorizationService {
             return null;
         }
         try {
-            this.user = await this.api.get('user/me');
+            this.user = await this.api.post('user/me?full=true', {});
             return this.user;
         } catch (e) {
             return null;

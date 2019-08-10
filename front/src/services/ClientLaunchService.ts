@@ -2,6 +2,7 @@ import {sleep} from "../util/Util";
 import {Client, QuickLaunch} from "../models/QuickLaunch";
 import {ClientDependencyService} from "./ClientDependencyService";
 import {ExecService} from "./ExecService";
+import {Game} from "../models/Game";
 
 export interface ClientLaunchConfig {
     onLog(message: string): any;
@@ -11,6 +12,7 @@ export interface ClientLaunchConfig {
     appArgs? : string[],
     count?: number,
     sleep? : number,
+    game? : Game,
     quickLaunch: QuickLaunch
 }
 
@@ -23,6 +25,8 @@ interface ClientLaunchState {
 export class ClientLaunchService {
 
     public static readonly DEFAULT_JVM_ARGS = ['-Xmx768m', '-Djava.net.preferIPv4Stack=true', '-Djava.net.preferIPv4Addresses=true', '-Xss2m'];
+    public static readonly INUVATION_JVM_ARGS = ['-noverify', '-Xmx1g'];
+
     private static readonly SLEEP = 10;
     
     
@@ -46,7 +50,7 @@ export class ClientLaunchService {
         for (let i = 0; i < config.count; i++) {
             const state : ClientLaunchState = {index : i, isQuickLaunch : false};
             // do not await this as the await never finishes due to the process being upon until client closes.
-            this.doLaunch(config, state);
+            this.doLaunch(config, state, config.game);
             await this.doSleep(config);
         }
     }
@@ -62,16 +66,20 @@ export class ClientLaunchService {
             index++;
             config.appArgs = this.getAppArgs(state);
             // do not await this as the await never finishes due to the process being upon until client closes.
-            this.doLaunch(config, state);
+            this.doLaunch(config, state, client.game);
             await this.doSleep(config);
         }
     }
 
-    private async doLaunch(config: ClientLaunchConfig, state : ClientLaunchState) {
+    private async doLaunch(config: ClientLaunchConfig, state : ClientLaunchState, game : Game = Game.Osrs) {
         let didError : boolean = false;
+        config.jvmArgs = Array.isArray(config.jvmArgs) ? config.jvmArgs : [];
         config.jvmArgs = config.jvmArgs || ClientLaunchService.DEFAULT_JVM_ARGS;
+        if(game == Game.Rs3) {
+            config.jvmArgs = config.jvmArgs.concat(ClientLaunchService.INUVATION_JVM_ARGS);
+        }
         try {
-            const jar = await this.clientService.getLatestJarPath();
+            const jar = await this.clientService.getLatestJarPath(game);
             setTimeout(() => {
                 if (!didError) {
                     const decodedAppArgs = config.appArgs && config.appArgs.length > 1 ? atob(config.appArgs[1]) : '';

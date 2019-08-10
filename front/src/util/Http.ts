@@ -1,6 +1,10 @@
 import {Electron} from "./Electron";
+import {getService} from "../Bottle";
+import {AuthorizationService} from "../services/AuthorizationService";
 
 const https = Electron.require('follow-redirects').https;
+const http = Electron.require('follow-redirects').http;
+
 const fs = Electron.require('fs-extra');
 
 export class Http {
@@ -14,18 +18,26 @@ export class Http {
         return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
     }
     
-    static async download(host : string, path : string, dest : string, onData? : (data : any) => any) {
+    static async download(host : string, path : string, dest : string, addAuth : boolean, onData? : (data : any) => any) {
         await fs.remove(dest);
         await fs.ensureFile(dest);
+        const headers : any = { 'User-Agent': 'Mozilla/5.0' };
+        if(addAuth) {
+            const auth = getService<AuthorizationService>('AuthorizationService');
+            const session = await auth.getSession() || "";
+            headers['Authorization'] = `Bearer ${session}`
+        }
         const options = {
             hostname: host,
             path: path,
-            headers: { 'User-Agent': 'Mozilla/5.0' }
+            headers
         };
+        
         return new Promise((res, rej) => {
             let file = fs.createWriteStream(dest, {flags : 'a'});
             let interval : any = null;
-            https.get(options, function(response : any) {
+            const resolver = host === "localhost" ? http : https;
+            resolver.get(options, function(response : any) {
                 const length = response.headers['content-length'];
                 interval = setInterval(() => {
                     fs.stat(dest, function (err : any, stats : any) {
