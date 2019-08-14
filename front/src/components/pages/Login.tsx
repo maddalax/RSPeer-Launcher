@@ -10,6 +10,7 @@ import {
 import {getService} from "../../Bottle";
 import {AuthorizationService} from "../../services/AuthorizationService";
 import {RouterAccessor} from "../../accessors/RouterAccessor";
+import {sleep} from "../../util/Util";
 
 export class Login extends React.Component<any, any> {
     
@@ -23,23 +24,24 @@ export class Login extends React.Component<any, any> {
             email : '',
             password : '',
             signInText : 'Sign in',
-            loggedIn : false
+            loggedIn : false,
+            color : 'blue'
         }
     }
 
-    onSignIn = () => {
-        this.setState({signInText : 'Signing in...'});
-        this.auth.login(this.state.email, this.state.password)
-            .then(() => {
-                this.setState({loggedIn : true}, () => {
-                    const password = document.getElementById('password-input');
-                    password && password.removeEventListener('keypress', this.keyListener);
-                    this.router.get().navigate('/');
-                })
+    onSignIn = async () => {
+        this.setState({signInText : 'Signing in...', color : 'blue'});
+        await sleep(1000);
+        try {
+            await this.auth.login(this.state.email, this.state.password);
+            this.setState({loggedIn: true}, () => {
+                const password = document.getElementById('password-input');
+                password && password.removeEventListener('keypress', this.keyListener);
+                this.router.get().navigate('/');
             })
-            .catch(res => {
-                this.setState({signInText : res.error});
-            })
+        } catch (e) {
+            this.setState({signInText : e.toString(), color : 'red'});
+        }
     };
     
     async componentDidMount() {
@@ -99,7 +101,7 @@ export class Login extends React.Component<any, any> {
                             />
                         </List>
                         <List>
-                            <Button outline color="blue" onClick={this.onSignIn}>{this.state.signInText}</Button>
+                            <Button outline color={this.state.color} onClick={this.onSignIn}>{this.state.signInText}</Button>
                         </List>
                     </Page>
                 </View>

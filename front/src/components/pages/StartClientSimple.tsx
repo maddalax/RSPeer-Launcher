@@ -9,6 +9,7 @@ import {WebsocketService} from "../../services/WebsocketService";
 import {AuthorizationService} from "../../services/AuthorizationService";
 import {Game, GameFormatted} from "../../models/Game";
 import {hasInuvation} from "../../models/User";
+import {isApiError} from "../../util/ErrorUtil";
 
 type Props = {
     path: string
@@ -70,9 +71,10 @@ export default ({open, onFinish, onError, onLog, onBotPanelOpen}: Props) => {
             onLog
         };
         const selected = selectedLauncher || Object.keys(launchers)[0];
-        const launcher = launchers[selected];
+        let launcher = launchers[selected];
         if(!launcher) {
-            return setError(`Unable to find selected launcher. ${selected}.`);
+            const fakeLauncher : any = {isMe : true};
+            launcher = fakeLauncher;
         }
         if(launcher.isMe) {
             launchService.launch(config);
@@ -103,25 +105,34 @@ export default ({open, onFinish, onError, onLog, onBotPanelOpen}: Props) => {
     };
 
     async function loadLaunchers() {
-        const ws = getService<WebsocketService>('WebsocketService');
-        let launchers = await remoteLauncher.getLaunchers();
-        const us = Object.keys(launchers).find((key: string) => {
-            const launcher = launchers[key];
-            if (launcher.identifier === ws.getIdentifier()) {
-                return key;
+        try {
+            const ws = getService<WebsocketService>('WebsocketService');
+            let launchers = await remoteLauncher.getLaunchers();
+            const us = Object.keys(launchers).find((key: string) => {
+                const launcher = launchers[key];
+                if (launcher.identifier === ws.getIdentifier()) {
+                    return key;
+                }
+                return null;
+            });
+            const result: any = {};
+            if (us) {
+                launchers[us].isMe = true;
+                result[us] = launchers[us];
             }
-            return null;
-        });
-        const result: any = {};
-        if (us) {
-            launchers[us].isMe = true;
-            result[us] = launchers[us];
+            Object.keys(launchers).filter(s => s !== us).forEach(l => {
+                result[l] = launchers[l];
+            });
+
+            setLaunchers(result);
+            await setInuvation();
+        } catch (e) {
+            if(isApiError(e)) {
+                setError("Failed to connect to RSPeer Servers, unable to load remote launchers. You should be able to start a local client.")
+            } else {
+                setError(e.toString());
+            }
         }
-        Object.keys(launchers).filter(s => s !== us).forEach(l => {
-            result[l] = launchers[l];
-        });
-        
-        setLaunchers(result);
     }
     
     async function setInuvation() {
@@ -134,7 +145,6 @@ export default ({open, onFinish, onError, onLog, onBotPanelOpen}: Props) => {
             return;
         }
         loadLaunchers();
-        setInuvation();
     }, [open]);
 
     return <Popup id="startClientSimple" tabletFullscreen={true} opened={open} onPopupClosed={() => {
@@ -198,7 +208,7 @@ export default ({open, onFinish, onError, onLog, onBotPanelOpen}: Props) => {
                         info={"Note: All clients opened from this will use the same proxy if you specified it above."}
                         clearButton
                     />
-                    <ListInput
+                    {Object.keys(launchers).length > 0 && <ListInput
                         label="Computer"
                         type="select"
                         onInputClear={() => setSelectedLauncher(Object.keys(launchers)[0])}
@@ -215,7 +225,7 @@ export default ({open, onFinish, onError, onLog, onBotPanelOpen}: Props) => {
                             const title = launcher.isMe ? `${launcher.host} (This Launcher) (${launcher.ip})` : `${launcher.host} (${launcher.ip})`;
                             return <option value={key}>{title}</option>
                         })}
-                    </ListInput>
+                    </ListInput>}
                     {inuvation && <ListInput
                         label="Game"
                         type="select"

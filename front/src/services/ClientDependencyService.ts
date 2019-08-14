@@ -32,9 +32,24 @@ export class ClientDependencyService {
     
     async getLatestJarPath(game : Game = Game.Osrs) {
         const folder = await this.file.getHiddenRsPeerFolder(game);
-        const latest = await this.api.get('bot/currentVersion?game=' + game);
-        const version = latest.version.toFixed(2);
-        return path.join(folder, `${version}.jar`);
+        try {
+            const latest = await this.api.get('bot/currentVersion?game=' + game);
+            const version = latest.version.toFixed(2);
+            return path.join(folder, `${version}.jar`);
+        } catch (e) {
+            try {
+                const files: string[] = await fs.readdir(folder);
+                const versions = files.filter(s => s.endsWith(".jar"))
+                    .map(s => parseFloat(s.replace(".jar", "")))
+                    .filter(s => !isNaN(s)).sort().reverse();
+                if (versions.length > 0) {
+                    return path.join(folder, `${versions[0]}.jar`);
+                }
+            } catch (e2) {
+                throw e;
+            }
+            throw e;
+        }
     }
     
     async hasLatestJar(game : Game) {
@@ -47,10 +62,11 @@ export class ClientDependencyService {
         return stat.size > 1000;
     }
     
-    async downloadLatest(game : Game, onData : (data : any) => any) {
+    async downloadLatest(game : Game, onData : (data : any) => any) : Promise<boolean> {
         if(await this.hasLatestJar(game)) {
-            return;
+            return true;
         }
-        await this.api.download('bot/currentJar?game=' + game, await this.getLatestJarPath(game), true, onData)
+        await this.api.download('bot/currentJar?game=' + game, await this.getLatestJarPath(game), true, onData);
+        return true;
     }
 }

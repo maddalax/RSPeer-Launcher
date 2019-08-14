@@ -28,12 +28,8 @@ export class AuthorizationService implements IAuthorizationService {
         if(!session) {
             return null;
         }
-        try {
-            this.user = await this.api.post('user/me?full=true', {});
-            return this.user;
-        } catch (e) {
-            return null;
-        }
+        this.user = await this.api.post('user/me?full=true', {});
+        return this.user;
     }
 
     async login(email: string, password: string): Promise<void> {

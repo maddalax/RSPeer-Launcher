@@ -2,6 +2,8 @@ import axios from 'axios';
 import {getService} from "../Bottle";
 import {AuthorizationService} from "./AuthorizationService";
 import {Http} from "../util/Http";
+import {ApiError} from "../models/ApiError";
+import {EventBus} from "../event/EventBus";
 
 declare global {
     interface Window { rspeer: {apiUrl : string, env : {isDev : boolean, isStaging : boolean, isProd : boolean} } }
@@ -80,30 +82,25 @@ export class ApiService {
         try {
             return await func();
         } catch (e) {
-            console.error(e);
-            if(e.toString().includes('failed with status code 429')) {
-                throw {error : 'You have been rate-limited. Please try again in a few minutes.'}
-            }
-            if(this.apiConfig.throwError) {
-                throw e;
-            }
-            const error = this.parseError(e);
-            if(!this.apiConfig.supressAlert) {
-               throw error;
-            }
-            return error;
+            throw this.parseError(e);
         }
     }
 
     private parseError = (ex : any) => {
+        if(ex.toString().includes('failed with status code 429')) {
+            return new ApiError('You have been rate-limited. Please try again in a few minutes.', ex);
+        }
         if(typeof ex === 'string') {
-            return {error : ex.toString()};
+            return new ApiError(ex.toString(), ex);
         }
         if(!ex.response) {
-            return {error : JSON.stringify(ex)};
+            const str = ex.toString();
+            if(str.startsWith("Error: Network Error")) {
+                return new ApiError('Failed to connect to RSPeer Servers.', ex)
+            }
+            return new ApiError(JSON.stringify(ex), ex);
         }
         const error = ex.response.data;
-        return {error : error.error || 'Something went wrong.'}
+        return new ApiError(error.error || 'Something went wrong.', ex);
     };
-
 }

@@ -29,12 +29,13 @@ import {ClientLaunchService} from "../../services/ClientLaunchService";
 import Websocket from './Websocket';
 import {EventBus} from "../../event/EventBus";
 import {Electron} from "../../util/Electron";
-import {formatDate, jsonClone} from "../../util/Util";
+import {formatDate, jsonClone, sleep} from "../../util/Util";
 import {isDev, isStaging, LauncherVersion} from "../../Config";
 import {ClientDependencyService} from "../../services/ClientDependencyService";
 import {FileService} from "../../services/FileService";
 import {Game} from "../../models/Game";
-import {hasInuvation} from "../../models/User";
+import {hasInuvation, User} from "../../models/User";
+import {isApiError} from "../../util/ErrorUtil";
 
 const {shell} = Electron.require('electron');
 const path = Electron.require('path');
@@ -57,6 +58,7 @@ type State = {
     checkingInuvationClient: boolean
     executingQuickLaunch : boolean,
     initializeMessage: string,
+    isIntervalCheck : boolean,
     failedLogin : boolean,
     errorLogs: string[]
     logs: string[]
@@ -81,6 +83,7 @@ export default class HomePage extends React.Component<any, State> {
             checkingJavaDependency: false,
             checkingInuvationClient : false,
             checkingRspeerClient : false,
+            isIntervalCheck : false,
             failedLogin : false,
             quickLaunch : null,
             errorLogs: [],
@@ -109,12 +112,34 @@ export default class HomePage extends React.Component<any, State> {
             this.setState({failedLogin : true});
             return;
         }
-        const auth = getService<AuthorizationService>('AuthorizationService');
-        const user = await auth.getUser();
+        this.initialize(router);
+    }
+    
+    async initialize(router : any) {
+        let user;
+        let errored;
+        try {
+            const auth = getService<AuthorizationService>('AuthorizationService');
+            user = await auth.getUser();
+        } catch (e) {
+            errored = true;
+            this.pushError(e);
+        }
+
+        if(errored && !user) {
+            this.pushError("Trying initialization again in 10 seconds.");
+            await sleep(10000);
+            await this.initialize(router);
+            return;
+        }
+        
         if (!user) {
             router.get().navigate('/login/');
             return;
         }
+        
+        this.setState({errorLogs : []});
+        
         const inuvation = hasInuvation(user);
         if(inuvation) {
             this.startLatestJarCheck(Game.Rs3);
@@ -195,16 +220,23 @@ export default class HomePage extends React.Component<any, State> {
     };
 
     pushError = (err: any, sentry : boolean = true) => {
-        console.error(err, sentry);
-        sentry && Sentry.captureException(err);
+        sentry && this.sentryCaptureError(err);
         this.setState(prev => {
-            const error = typeof err === "object" ? JSON.stringify(err) : err.toString();
+            const error = err.toString();
             prev.errorLogs.unshift(`${formatDate(Date.now() as any, true)} - ${error}`);
             if (prev.errorLogs.length > 100) {
                 prev.errorLogs.splice(prev.errorLogs.length - 1, 1);
             }
             return prev;
         })
+    };
+    
+    sentryCaptureError = (err : any) => {
+      if(isApiError(err)) {
+          return;
+      }
+      console.error("Capturing with sentry.", err);
+      Sentry.captureException(err);
     };
 
     pushLog = (log: string) => {
@@ -245,22 +277,23 @@ export default class HomePage extends React.Component<any, State> {
             if(game === Game.Rs3 && this.state.checkingInuvationClient) {
                 return;
             }
-            const hasLatest = await client.hasLatestJar(game);
-            const hasApiJar = await client.hasApiJar();
-            if(hasLatest && !hasApiJar) {
-                try {
+            try {
+                const hasLatest = await client.hasLatestJar(game);
+                const hasApiJar = await client.hasApiJar();
+                if (hasLatest && !hasApiJar) {
                     await client.saveApiJar(game);
-                } catch (e) {
-                    this.pushError(e, false);
                 }
-            }
-            if(hasLatest) {
-                return;
+                if (hasLatest) {
+                    return;
+                }
+            } catch (e) {
+                // Do not need to show this to user since it runs every 5s.
+                console.error(e);
             }
             if(game === Game.Osrs) {
-                this.setState({checkingRspeerClient: true});
+                this.setState({checkingRspeerClient: true, isIntervalCheck : true});
             } else {
-                this.setState({checkingInuvationClient: true});
+                this.setState({checkingInuvationClient: true, isIntervalCheck : true});
             }
         }, 5000);
         this.clientCheckIntervals.push(interval);
@@ -391,11 +424,11 @@ export default class HomePage extends React.Component<any, State> {
             {this.state.checkingJavaDependency && <CheckJava isQuickLaunch={this.state.executingQuickLaunch} onFinish={() => {
                 this.setState({checkingJavaDependency: false}, this.setConfig);
             }}/>}
-            {this.state.checkingRspeerClient && <CheckClient game={Game.Osrs} onFinish={(path: string) => {
+            {this.state.checkingRspeerClient && <CheckClient isInterval={this.state.isIntervalCheck} game={Game.Osrs} onFinish={(path: string) => {
                 this.setState({checkingRspeerClient: false, clientPath: path}, this.setConfig);
             }}/>}
-            {this.state.checkingInuvationClient && <CheckClient game={Game.Rs3} onFinish={(path: string) => {
-                this.setState({checkingInuvationClient: false, clientPath: path}, this.setConfig);
+            {this.state.checkingInuvationClient && <CheckClient isInterval={this.state.isIntervalCheck} game={Game.Rs3} onFinish={() => {
+                this.setState({checkingInuvationClient: false}, this.setConfig);
             }}/>}
         </Page>
     }
