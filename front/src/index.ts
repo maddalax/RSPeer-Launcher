@@ -26,7 +26,7 @@ import {DatabaseService} from "./services/DatabaseService";
 import {isDev} from "./Config";
 
 if(!isDev()) {
-    Sentry.init({dsn: "https://3fd4667c24934831a4703675d6069aa5@sentry.io/1490834"});
+    Sentry.init({dsn: "https://907265de76094a54b2ce14522ca843fe@sentry.io/1490834"});
 }
 
 // Init Framework7-React plugin
