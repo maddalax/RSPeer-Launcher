@@ -1,0 +1,84 @@
+{
+  "name": "rspeer-launcher",
+  "version": "1.0.0",
+  "description": "RSPeer Launcher",
+  "main": "src/main.js",
+  "homepage": "https://rspeer.org",
+  "scripts": {
+    "start": "electron .",
+    "start:dev": "cross-env NODE_ENV=development electron .",
+    "start:dev:tools": "cross-env NODE_ENV=development tools=true electron .",
+    "start:staging": "cross-env NODE_ENV=staging electron .",
+    "start:staging:tools": "cross-env NODE_ENV=staging tools=true electron .",
+    "dist:m": "electron-builder -m",
+    "dist:w": "electron-builder -w",
+    "dist:l": "electron-builder -l",
+    "dist": "electron-builder -mwl",
+    "postinstall": "install-app-deps"
+  },
+  "author": {
+    "name": "RSPeer",
+    "email": "rspeerbotting@gmail.com",
+    "url": "https://rspeer.org"
+  },
+  "devDependencies": {
+    "cross-env": "^5.2.0",
+    "electron": "5.0.7",
+    "electron-builder": "21.2.0"
+  },
+  "build": {
+    "productName": "RSPeer Launcher",
+    "appId": "org.rspeer.launcher",
+    "files": [
+      "package.json",
+      "src/*"
+    ],
+    "dmg": {
+      "contents": [
+        {
+          "x": 130,
+          "y": 220
+        },
+        {
+          "x": 410,
+          "y": 220,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ]
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "portable",
+        "zip"
+      ]
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "snap",
+        "deb",
+        "tar.gz"
+      ],
+      "category": "Development"
+    },
+    "directories": {
+      "buildResources": "public",
+      "output": "release"
+    }
+  },
+  "dependencies": {
+    "axios": "0.19.0",
+    "execa": "2.1.0",
+    "follow-redirects": "1.9.0",
+    "fs-extra": "8.1.0",
+    "node-notifier": "^5.4.0",
+    "sqlite3": "^4.0.9",
+    "tar": "^4.4.10",
+    "typescript": "^3.5.2",
+    "uuid": "^3.3.2",
+    "yauzl": "^2.10.0",
+    "proper-lockfile": "^4.1.1"
+  }
+}
