@@ -34,7 +34,7 @@ export class ClientDependencyService {
         }
 
         const dest = path.join(folder, 'rspeer.jar');
-        await fs.remove(dest);
+        await this.file.delete(dest);
         await fs.copy(jar, dest);
         await fs.writeJson(path.join(folder, 'sdk.json'), {clientPath: jar});
     }
@@ -67,36 +67,34 @@ export class ClientDependencyService {
     }
 
     async getOrSaveLatestJar(game : Game = Game.Osrs, onData : (data : any) => void) {
-        const path = await this.getLatestJarPath(game);
-        if(await this.hasLatestJar(game)) {
-            return path;
-        }
-        await this.downloadLatest(game, onData);
-        return path;
+       return await this.downloadLatest(game, onData);
     }
 
     async hasLatestJar(game : Game) {
-        const path = await this.getLatestJarPath(game);
-        const exists = await this.file.exists(path);
+        const latestJarPath = await this.getLatestJarPath(game);
+        const exists = await this.file.exists(latestJarPath);
         if(!exists) {
             return false;
         }
         try {
-            const hash = await Encryptor.sha512HashFromFile(path);
+            const hash = await Encryptor.sha512HashFromFile(latestJarPath);
             const latestVersion = await this.getLatestJarVersion(game);
             const versionByHash = await this.api.get(`bot/getVersionByHash?game=${game}&hash=${hash}`);
-            return Number(latestVersion).toFixed(2).toString() === Number(versionByHash).toFixed(2).toString();
+            const jarFolder = await this.file.getHiddenRsPeerFolder(game);
+            return path.join(jarFolder, `${versionByHash}.jar`) === latestVersion;
         } catch (e) {
+            console.error(e);
             const stat = await fs.stat(path);
             return stat.size > 1000;
         }
     }
 
-    async downloadLatest(game : Game, onData : (data : any) => any) : Promise<boolean> {
+    async downloadLatest(game : Game, onData : (data : any) => any) : Promise<string> {
+        const path = await this.getLatestJarPath(game);
         if(await this.hasLatestJar(game)) {
-            return true;
+            return path;
         }
-        await this.api.download('bot/currentJar?game=' + game, await this.getLatestJarPath(game), true, onData);
-        return true;
+        await this.api.download('bot/currentJar?game=' + game, path, true, onData);
+        return path;
     }
 }

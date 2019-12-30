@@ -6,10 +6,10 @@ const path = Electron.require('path');
 const execa = Electron.require('execa');
 
 export class ExecService {
-    
+
     private readonly fileService : FileService;
     private readonly database : DatabaseService;
-    
+
     constructor(fileService: FileService, database : DatabaseService) {
         this.fileService = fileService;
         this.database = database;
@@ -31,5 +31,5 @@ export class ExecService {
         // fire and forget
         execa(fullPath, commands, { detached: true, stdio: 'ignore' });
     }
-    
+
 }

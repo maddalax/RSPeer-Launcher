@@ -19,7 +19,11 @@ export class Http {
     }
 
     static async download(host : string, path : string, dest : string, addAuth : boolean, onData? : (data : any) => any) {
-        await fs.remove(dest);
+        try {
+            await fs.remove(dest);
+        } catch (e) {
+            console.error(e);
+        }
         await fs.ensureFile(dest);
         const headers : any = { 'User-Agent': 'Mozilla/5.0' };
         if(addAuth) {
