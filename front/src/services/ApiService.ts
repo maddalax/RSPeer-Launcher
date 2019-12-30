@@ -38,7 +38,7 @@ export class ApiService {
     };
 
     private buildPath = (path : string) => {
-        return `${window.rspeer.apiUrl}${path}`
+        return `https://services.rspeer.org/api/${path}`
     };
 
     public async post(path : string, body : any, headers? : any) : Promise<any> {
@@ -76,7 +76,7 @@ export class ApiService {
         url = url.replace("/api/", "");
         return await this.execute(() => Http.download(url, `/api/${path}`, dest, addAuth, onData));
     }
-    
+
     private async execute(func : () => Promise<any>) {
         try {
             return await func();
